@@ -154,6 +154,10 @@ include __DIR__ . '/../../includes/sidebar.php';
                 </td>
                 <td>
                   <div class="d-flex flex-wrap gap-1">
+                    <!-- View -->
+                    <a href="view.php?id=<?= $emp['id'] ?>" class="btn btn-sm btn-outline-info" title="View">
+                      <i class="bi bi-eye"></i>
+                    </a>
                     <?php if ($_SESSION['role'] === 'admin'): ?>
                       <!-- Edit -->
                       <a href="edit.php?id=<?= $emp['id'] ?>" class="btn btn-sm btn-outline-primary" title="Edit">
