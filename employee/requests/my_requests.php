@@ -85,17 +85,7 @@ include '../../includes/sidebar.php';
                 </td>
               </tr>
               <?php endforeach; ?>
-              <?php if (empty($requests)): ?>
-              <tr>
-                <td colspan="6" class="text-center text-muted py-5">
-                  <i class="bi bi-inbox fs-3 d-block mb-2"></i>You haven't submitted any asset requests yet.
-                  <br>
-                  <a href="<?= SITE_URL ?>/employee/requests/new.php" class="btn btn-primary btn-sm mt-2">
-                    <i class="bi bi-plus-circle me-1"></i>Submit a Request
-                  </a>
-                </td>
-              </tr>
-              <?php endif; ?>
+
             </tbody>
           </table>
         </div>
@@ -113,7 +103,17 @@ $(function () {
     pageLength: 25,
     order: [[3, 'desc']],
     responsive: true,
-    language: { search: 'Search requests:' }
+    language: {
+      search: 'Search requests:',
+      emptyTable: '<div class="text-center text-muted py-4">' +
+                    '<i class="bi bi-inbox fs-3 d-block mb-2"></i>' +
+                    "You haven't submitted any asset requests yet." +
+                    '<br>' +
+                    '<a href="<?= SITE_URL ?>/employee/requests/new.php" class="btn btn-primary btn-sm mt-2">' +
+                      '<i class="bi bi-plus-circle me-1"></i>Submit a Request' +
+                    '</a>' +
+                  '</div>'
+    }
   });
 });
 </script>
