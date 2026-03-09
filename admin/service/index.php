@@ -147,7 +147,7 @@ include __DIR__ . '/../../includes/sidebar.php';
                       </button>
 
                     <?php elseif ($sr['status'] === 'completed' && $sr['service_bill']): ?>
-                      <a href="<?= SITE_URL . '/uploads/bills/' . urlencode(basename($sr['service_bill'])) ?>"
+                      <a href="<?= SITE_URL . '/assets/uploads/' . urlencode($sr['service_bill']) ?>"
                          target="_blank"
                          class="btn btn-sm btn-outline-secondary"
                          title="View Bill">

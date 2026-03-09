@@ -66,7 +66,7 @@ include '../../includes/sidebar.php';
                   'assigned'   => 'bg-primary',
                   'available'  => 'bg-success',
                   'in_service' => 'bg-warning text-dark',
-                  'disposed'   => 'bg-danger',
+                  'returned'   => 'bg-secondary',
                   default      => 'bg-secondary',
                 };
               ?>

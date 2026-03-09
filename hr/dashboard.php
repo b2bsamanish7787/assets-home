@@ -43,7 +43,7 @@ include '../includes/sidebar.php';
     <div class="d-flex justify-content-between align-items-center mb-4">
       <div>
         <h4 class="mb-0"><i class="bi bi-speedometer2 me-2 text-primary"></i>HR Dashboard</h4>
-        <small class="text-muted">Welcome back, <?= htmlspecialchars($_SESSION['first_name'] ?? 'HR User') ?>!</small>
+        <small class="text-muted">Welcome back, <?= htmlspecialchars($_SESSION['first_name'] ?? ($_SESSION['name'] ?? 'HR User')) ?>!</small>
       </div>
       <span class="text-muted small"><i class="bi bi-calendar3 me-1"></i><?= date('l, d F Y') ?></span>
     </div>

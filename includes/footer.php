@@ -18,6 +18,8 @@
   <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
   <!-- SweetAlert2 -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <!-- Global site config for app.js -->
+  <script>const siteUrl = '<?= SITE_URL ?>';</script>
   <!-- Custom JS -->
   <script src="<?= SITE_URL ?>/assets/js/app.js"></script>
   <?php if (!empty($extraScripts)) echo $extraScripts; ?>

@@ -29,6 +29,8 @@ define('UPLOAD_PATH', __DIR__ . '/../assets/uploads/');
 
 // Session timeout in seconds (30 minutes)
 define('SESSION_TIMEOUT', 1800);
+// Login lockout duration in seconds (30 minutes)
+define('LOGIN_LOCKOUT_TIME', 1800);
 
 // Error reporting — set to 0 in production
 ini_set('display_errors', 0);

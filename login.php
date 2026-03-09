@@ -75,6 +75,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $_SESSION['user_id']      = $user['id'];
                         $_SESSION['role']         = $user['role'];
                         $_SESSION['name']         = $user['first_name'] . ' ' . $user['last_name'];
+                        $_SESSION['first_name']   = $user['first_name'];
+                        $_SESSION['last_name']    = $user['last_name'];
                         $_SESSION['email']        = $user['email'];
                         $_SESSION['employee_id']  = $user['employee_id'];
                         $_SESSION['last_activity'] = time();
@@ -101,7 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 } else {
                     $_SESSION['login_attempts']++;
                     if ($_SESSION['login_attempts'] >= 5) {
-                        $_SESSION['login_locked_until'] = time() + 1800; // 30 min lock
+                        $_SESSION['login_locked_until'] = time() + LOGIN_LOCKOUT_TIME; // 30 min lock
                         $error = 'Too many failed attempts. Account locked for 30 minutes.';
                     } else {
                         $remaining = 5 - $_SESSION['login_attempts'];

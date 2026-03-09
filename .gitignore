@@ -1,0 +1,24 @@
+# Buzznation Assets Management System
+# .gitignore
+
+# Vendor dependencies (if composer used)
+/vendor/
+
+# Log files
+/logs/*.log
+
+# Uploaded files (keep placeholder)
+/assets/uploads/*
+!/assets/uploads/.gitkeep
+
+# Environment/config overrides
+/config/local.php
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
