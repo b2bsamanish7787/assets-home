@@ -170,25 +170,33 @@ $(function () {
 
   // Mark single notification as read
   $(document).on('click', '.btn-mark-read', function () {
-    const id  = $(this).data('id');
-    const row = $(this).closest('tr');
-    $.post('<?= SITE_URL ?>/ajax/mark_notification_read.php', { id: id, csrf: '<?= generateCSRF() ?>' })
-      .done(function (res) {
-        const data = typeof res === 'string' ? JSON.parse(res) : res;
+    const btn = $(this);
+    const id  = btn.data('id');
+    const row = btn.closest('tr');
+    $.get(siteUrl + '/ajax/notifications.php', { action: 'mark_read', id: id })
+      .done(function (data) {
         if (data.success) {
           row.removeClass('table-warning fw-semibold');
           row.find('.badge.bg-danger').replaceWith('<span class="badge bg-light text-secondary border">Read</span>');
-          row.find('.btn-mark-read').replaceWith('<span class="text-muted"><i class="bi bi-check-all"></i></span>');
+          btn.replaceWith('<span class="text-muted"><i class="bi bi-check-all"></i></span>');
+          // Immediately update the navbar badge counter
+          const badge    = $('#notif-count');
+          const newCount = Math.max(0, (parseInt(badge.text(), 10) || 0) - 1);
+          if (newCount === 0) {
+            badge.addClass('d-none');
+          } else {
+            badge.text(newCount);
+          }
         }
       });
   });
 
   // Mark all as read via AJAX
   $('#btnMarkAllRead').on('click', function () {
-    $.post('<?= SITE_URL ?>/ajax/mark_notification_read.php', { all: 1, csrf: '<?= generateCSRF() ?>' })
-      .done(function (res) {
-        const data = typeof res === 'string' ? JSON.parse(res) : res;
+    $.get(siteUrl + '/ajax/notifications.php', { action: 'mark_all_read' })
+      .done(function (data) {
         if (data.success) {
+          $('#notif-count').text('0').addClass('d-none');
           Swal.fire({
             icon: 'success', title: 'Done!', text: 'All notifications marked as read.',
             timer: 1500, showConfirmButton: false
@@ -201,7 +209,7 @@ $(function () {
   $(document).on('click', '.notif-link', function () {
     const id = $(this).data('id');
     if (id) {
-      $.post('<?= SITE_URL ?>/ajax/mark_notification_read.php', { id: id, csrf: '<?= generateCSRF() ?>' });
+      $.get(siteUrl + '/ajax/notifications.php', { action: 'mark_read', id: id });
     }
   });
 });
