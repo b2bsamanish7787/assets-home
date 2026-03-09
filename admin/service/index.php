@@ -72,9 +72,7 @@ include __DIR__ . '/../../includes/sidebar.php';
               <th>Problem Since</th>
               <th>Approx. Amount</th>
               <th>Status</th>
-              <?php if ($_SESSION['role'] === 'admin'): ?>
-                <th class="text-center">Actions</th>
-              <?php endif; ?>
+              <th class="text-center">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -111,6 +109,12 @@ include __DIR__ . '/../../includes/sidebar.php';
                 </td>
                 <?php if ($_SESSION['role'] === 'admin'): ?>
                   <td class="text-center text-nowrap">
+
+                    <a href="view.php?id=<?= $sr['id'] ?>"
+                       class="btn btn-sm btn-outline-secondary me-1"
+                       title="View">
+                      <i class="bi bi-eye"></i>
+                    </a>
 
                     <?php if ($sr['status'] === 'pending'): ?>
                       <button type="button"
@@ -157,6 +161,14 @@ include __DIR__ . '/../../includes/sidebar.php';
                       <span class="text-muted small">—</span>
                     <?php endif; ?>
 
+                  </td>
+                <?php else: ?>
+                  <td class="text-center">
+                    <a href="view.php?id=<?= $sr['id'] ?>"
+                       class="btn btn-sm btn-outline-secondary"
+                       title="View">
+                      <i class="bi bi-eye"></i>
+                    </a>
                   </td>
                 <?php endif; ?>
               </tr>
