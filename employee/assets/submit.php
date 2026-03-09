@@ -82,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Insert asset
             $stmt = $pdo->prepare("INSERT INTO assets
                                    (category_id, asset_name, model_number, serial_number, receive_date,
-                                    purchased_by, bill_path, status, assigned_to, submitted_by, created_at)
+                                    purchased_by, bill_file, status, assigned_to, submitted_by, created_at)
                                    VALUES (?, ?, ?, ?, ?, ?, ?, 'assigned', ?, ?, NOW())");
             $stmt->execute([
                 $formData['category_id'],
@@ -115,7 +115,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $subject    = SITE_NAME . ': New Asset Submitted';
             foreach ($recipients as $recipient) {
                 if (function_exists('emailAssetSubmission')) {
-                    $body = emailAssetSubmission($recipient['first_name'], $_SESSION['first_name'] ?? '', $formData['asset_name'], $notifLink);
+                    $body = emailAssetSubmission(trim($_SESSION['first_name'] ?? 'An employee'), $formData['asset_name']);
                 } else {
                     $body = '<p>Hi ' . htmlspecialchars($recipient['first_name']) . ',</p>'
                           . '<p><strong>' . htmlspecialchars($_SESSION['first_name'] ?? 'An employee') . '</strong> submitted a new asset: '

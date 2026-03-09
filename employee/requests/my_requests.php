@@ -11,7 +11,7 @@ checkRole(['employee']);
 
 $currentUserId = (int)$_SESSION['user_id'];
 
-$stmt = $pdo->prepare("SELECT id, requirement, description, status, admin_remarks, created_at
+$stmt = $pdo->prepare("SELECT id, asset_requirement AS requirement, description, status, admin_remarks, created_at
                         FROM asset_requests
                         WHERE employee_id = ?
                         ORDER BY created_at DESC");

@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $pdo->beginTransaction();
 
-            $stmt = $pdo->prepare("INSERT INTO asset_requests (employee_id, requirement, description, status, created_at)
+            $stmt = $pdo->prepare("INSERT INTO asset_requests (employee_id, asset_requirement, description, status, created_at)
                                    VALUES (?, ?, ?, 'pending', NOW())");
             $stmt->execute([
                 $currentUserId,
@@ -51,7 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $subject    = SITE_NAME . ': New Asset Request from ' . trim($employeeName);
             foreach ($recipients as $recipient) {
                 if (function_exists('emailAssetRequest')) {
-                    $body = emailAssetRequest($recipient['first_name'], trim($employeeName), $formData['requirement'], $notifLink);
+                    $body = emailAssetRequest(trim($employeeName), $formData['requirement']);
                 } else {
                     $body = '<p>Hi ' . htmlspecialchars($recipient['first_name']) . ',</p>'
                           . '<p><strong>' . htmlspecialchars(trim($employeeName)) . '</strong> submitted a new asset request.</p>'

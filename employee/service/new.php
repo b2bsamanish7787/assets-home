@@ -57,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $stmt = $pdo->prepare("INSERT INTO service_requests
                                    (employee_id, asset_id, problem_description, problem_since,
-                                    impact_on_work, approx_service_amount, status, created_at)
+                                    impact_on_work, approx_amount, status, created_at)
                                    VALUES (?, ?, ?, ?, ?, ?, 'pending', NOW())");
             $stmt->execute([
                 $currentUserId,
@@ -86,7 +86,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $subject    = SITE_NAME . ': Service Request – ' . $assetName;
             foreach ($recipients as $recipient) {
                 if (function_exists('emailServiceRequest')) {
-                    $body = emailServiceRequest($recipient['first_name'], $employeeName, $assetName, $formData['problem'], $notifLink);
+                    $body = emailServiceRequest($employeeName, $assetName);
                 } else {
                     $body = '<p>Hi ' . htmlspecialchars($recipient['first_name']) . ',</p>'
                           . '<p><strong>' . htmlspecialchars($employeeName) . '</strong> raised a service request.</p>'

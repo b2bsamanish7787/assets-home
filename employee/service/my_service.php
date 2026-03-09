@@ -77,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['upload_bill'])) {
 
 // Fetch service requests
 $stmt = $pdo->prepare("SELECT sr.id, a.asset_name, sr.problem_description, sr.problem_since,
-                               sr.approx_service_amount, sr.status, sr.admin_remarks,
+                               sr.approx_amount, sr.status, sr.admin_remarks,
                                sr.service_bill, sr.created_at
                         FROM service_requests sr
                         LEFT JOIN assets a ON a.id = sr.asset_id
@@ -147,8 +147,8 @@ include '../../includes/sidebar.php';
                   <?= $sr['problem_since'] ? date('d M Y', strtotime($sr['problem_since'])) : '—' ?>
                 </td>
                 <td class="text-end">
-                  <?= $sr['approx_service_amount'] !== null
-                    ? '₹' . number_format((float)$sr['approx_service_amount'], 2)
+                  <?= $sr['approx_amount'] !== null
+                    ? '₹' . number_format((float)$sr['approx_amount'], 2)
                     : '<span class="text-muted">—</span>'
                   ?>
                 </td>
