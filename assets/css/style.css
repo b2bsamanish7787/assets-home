@@ -1,0 +1,280 @@
+/**
+ * Buzznation Assets Management System
+ * File: assets/css/style.css
+ * Description: Custom styles — sidebar layout, cards, badges
+ * Author: Buzznation IT Team
+ */
+
+/* =========================================================
+   CSS Variables
+   ========================================================= */
+:root {
+  --sidebar-width: 250px;
+  --sidebar-bg: #2c3e50;
+  --sidebar-hover: #34495e;
+  --sidebar-active: #3498db;
+  --navbar-height: 56px;
+  --primary-color: #2c3e50;
+  --accent-color: #3498db;
+}
+
+/* =========================================================
+   Base
+   ========================================================= */
+body {
+  background-color: #f4f6fb;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: .9rem;
+}
+
+/* =========================================================
+   Top Navbar
+   ========================================================= */
+.top-navbar {
+  height: var(--navbar-height);
+  z-index: 1050;
+}
+
+.notification-bell {
+  position: relative;
+  text-decoration: none;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -6px;
+  right: -8px;
+  font-size: .6rem;
+  padding: 2px 5px;
+  border-radius: 50px;
+  min-width: 16px;
+  text-align: center;
+}
+
+/* =========================================================
+   Sidebar
+   ========================================================= */
+.sidebar {
+  width: var(--sidebar-width);
+  min-height: 100vh;
+  background-color: var(--sidebar-bg);
+  position: fixed;
+  top: var(--navbar-height);
+  left: 0;
+  bottom: 0;
+  z-index: 1040;
+  overflow-y: auto;
+  transition: transform .3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-brand {
+  padding: 18px 20px;
+  font-weight: 700;
+  font-size: .95rem;
+  color: #fff;
+  border-bottom: 1px solid rgba(255,255,255,.1);
+  background: rgba(0,0,0,.2);
+}
+
+.sidebar-nav {
+  list-style: none;
+  padding: 10px 0;
+  margin: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-nav .nav-item {
+  width: 100%;
+}
+
+.sidebar-nav .nav-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  color: rgba(255,255,255,.75);
+  text-decoration: none;
+  transition: background .2s, color .2s;
+  font-size: .875rem;
+}
+
+.sidebar-nav .nav-link:hover {
+  background: var(--sidebar-hover);
+  color: #fff;
+}
+
+.sidebar-nav .nav-link.active {
+  background: var(--sidebar-active);
+  color: #fff;
+  font-weight: 600;
+}
+
+.sidebar-nav .nav-link i {
+  font-size: 1rem;
+  width: 20px;
+  text-align: center;
+}
+
+.sidebar-nav .nav-item.mt-auto {
+  margin-top: auto;
+  border-top: 1px solid rgba(255,255,255,.1);
+}
+
+/* =========================================================
+   Wrapper / Main Content
+   ========================================================= */
+.wrapper {
+  padding-top: var(--navbar-height);
+}
+
+.main-content {
+  margin-left: var(--sidebar-width);
+  flex: 1;
+  padding: 24px;
+  min-height: calc(100vh - var(--navbar-height));
+  transition: margin-left .3s ease;
+}
+
+/* =========================================================
+   Dashboard Cards
+   ========================================================= */
+.stat-card {
+  border: none;
+  border-radius: 10px;
+  border-left: 5px solid var(--accent-color);
+  box-shadow: 0 2px 10px rgba(0,0,0,.07);
+  transition: transform .2s, box-shadow .2s;
+}
+
+.stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0,0,0,.12);
+}
+
+.stat-card .stat-icon {
+  font-size: 2rem;
+  opacity: .3;
+}
+
+.stat-card.border-primary  { border-left-color: #0d6efd; }
+.stat-card.border-success  { border-left-color: #198754; }
+.stat-card.border-warning  { border-left-color: #ffc107; }
+.stat-card.border-danger   { border-left-color: #dc3545; }
+.stat-card.border-info     { border-left-color: #0dcaf0; }
+.stat-card.border-secondary{ border-left-color: #6c757d; }
+
+/* =========================================================
+   Page Header
+   ========================================================= */
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.page-header h4 {
+  margin: 0;
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
+/* =========================================================
+   Cards
+   ========================================================= */
+.card {
+  border: none;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0,0,0,.06);
+}
+
+.card-header {
+  background: var(--primary-color);
+  color: #fff;
+  border-radius: 10px 10px 0 0 !important;
+  font-weight: 600;
+}
+
+/* =========================================================
+   Tables
+   ========================================================= */
+.table th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+  color: var(--primary-color);
+  white-space: nowrap;
+}
+
+/* =========================================================
+   Badges (status)
+   ========================================================= */
+.badge-available   { background: #198754; }
+.badge-assigned    { background: #0d6efd; }
+.badge-in_service  { background: #fd7e14; }
+.badge-returned    { background: #6c757d; }
+
+/* =========================================================
+   Flash Messages
+   ========================================================= */
+.flash-container {
+  position: fixed;
+  top: calc(var(--navbar-height) + 10px);
+  right: 20px;
+  z-index: 9999;
+  min-width: 280px;
+}
+
+/* =========================================================
+   File Upload Preview
+   ========================================================= */
+.upload-preview {
+  max-height: 150px;
+  border-radius: 6px;
+  border: 1px solid #dee2e6;
+  padding: 4px;
+  margin-top: 8px;
+  display: none;
+}
+
+/* =========================================================
+   Responsive — mobile sidebar collapses
+   ========================================================= */
+@media (max-width: 991.98px) {
+  .sidebar {
+    transform: translateX(calc(-1 * var(--sidebar-width)));
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+    box-shadow: 4px 0 20px rgba(0,0,0,.3);
+  }
+
+  .main-content {
+    margin-left: 0;
+  }
+
+  /* Overlay when sidebar is open on mobile */
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.5);
+    z-index: 1030;
+  }
+
+  .sidebar-overlay.active {
+    display: block;
+  }
+}
+
+/* =========================================================
+   Utility
+   ========================================================= */
+.cursor-pointer { cursor: pointer; }
+.text-primary-dark { color: var(--primary-color); }
