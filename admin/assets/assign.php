@@ -80,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $employeeId,
                 'asset_assigned',
                 "Asset \"{$assetName}\" has been assigned to you.",
-                SITE_URL . '/employee/my_assets.php'
+                SITE_URL . '/employee/assets/my_assets.php'
             );
 
             logActivity(

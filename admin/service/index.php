@@ -185,7 +185,7 @@ $extraScripts = <<<JS
 $(function () {
   $('#serviceTable').DataTable({
     pageLength: 25,
-    order: [[7, 'desc']],
+    order: [[0, 'desc']],
     columnDefs: [{ orderable: false, targets: -1 }]
   });
 
