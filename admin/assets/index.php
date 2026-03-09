@@ -95,6 +95,11 @@ include __DIR__ . '/../../includes/sidebar.php';
                   </span>
                 </td>
                 <td class="text-center text-nowrap">
+                  <a href="view.php?id=<?= $asset['id'] ?>"
+                     class="btn btn-sm btn-outline-primary me-1"
+                     title="View Details">
+                    <i class="bi bi-eye"></i>
+                  </a>
                   <?php if ($_SESSION['role'] === 'admin'): ?>
                     <a href="assign.php?id=<?= $asset['id'] ?>"
                        class="btn btn-sm btn-outline-success me-1"
