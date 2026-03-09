@@ -239,9 +239,6 @@ include '../../includes/sidebar.php';
                     </td>
                   </tr>
                   <?php endforeach; ?>
-                  <?php if (empty($assignedAssets)): ?>
-                  <tr><td colspan="11" class="text-center text-muted py-4">No records found.</td></tr>
-                  <?php endif; ?>
                 </tbody>
               </table>
             </div>
@@ -286,9 +283,6 @@ include '../../includes/sidebar.php';
                     <td><span class="badge bg-success">Available</span></td>
                   </tr>
                   <?php endforeach; ?>
-                  <?php if (empty($availableAssets)): ?>
-                  <tr><td colspan="8" class="text-center text-muted py-4">No available assets found.</td></tr>
-                  <?php endif; ?>
                 </tbody>
               </table>
             </div>
@@ -333,18 +327,18 @@ include '../../includes/sidebar.php';
                     <td><strong><?= $row['total_count'] ?></strong></td>
                   </tr>
                   <?php endforeach; ?>
+                  </tbody>
                   <?php if (!empty($empSummary)): ?>
-                  <tr class="table-secondary fw-bold">
-                    <td colspan="2" class="text-end">Grand Total</td>
-                    <td><span class="badge bg-success"><?= $totalActive ?></span></td>
-                    <td><span class="badge bg-danger"><?= $totalInactive ?></span></td>
-                    <td><?= $grandTotal ?></td>
-                  </tr>
-                  <?php else: ?>
-                  <tr><td colspan="5" class="text-center text-muted py-4">No employee data found.</td></tr>
+                  <tfoot>
+                    <tr class="table-secondary fw-bold">
+                      <td colspan="2" class="text-end">Grand Total</td>
+                      <td><span class="badge bg-success"><?= $totalActive ?></span></td>
+                      <td><span class="badge bg-danger"><?= $totalInactive ?></span></td>
+                      <td><?= $grandTotal ?></td>
+                    </tr>
+                  </tfoot>
                   <?php endif; ?>
-                </tbody>
-              </table>
+                </table>
             </div>
           </div>
         </div>
@@ -362,19 +356,19 @@ $(function () {
     pageLength: 25,
     order: [[1, 'asc']],
     responsive: true,
-    language: { search: 'Search assigned assets:' }
+    language: { search: 'Search assigned assets:', emptyTable: 'No records found.' }
   });
   $('#tableAvailable').DataTable({
     pageLength: 25,
     order: [[1, 'asc']],
     responsive: true,
-    language: { search: 'Search available assets:' }
+    language: { search: 'Search available assets:', emptyTable: 'No available assets found.' }
   });
   $('#tableEmp').DataTable({
     pageLength: 25,
     order: [[1, 'asc']],
     responsive: true,
-    language: { search: 'Search departments:' }
+    language: { search: 'Search departments:', emptyTable: 'No employee data found.' }
   });
 
   // Re-initialise DataTables when a tab is shown (fixes column width)
