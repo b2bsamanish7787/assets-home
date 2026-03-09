@@ -67,9 +67,7 @@ include __DIR__ . '/../../includes/sidebar.php';
               <th>Description</th>
               <th>Date</th>
               <th>Status</th>
-              <?php if ($_SESSION['role'] === 'admin'): ?>
-                <th class="text-center">Actions</th>
-              <?php endif; ?>
+              <th class="text-center">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -98,29 +96,28 @@ include __DIR__ . '/../../includes/sidebar.php';
                        data-bs-toggle="tooltip"></i>
                   <?php endif; ?>
                 </td>
-                <?php if ($_SESSION['role'] === 'admin'): ?>
-                  <td class="text-center text-nowrap">
-                    <?php if ($req['status'] === 'pending'): ?>
-                      <a href="action.php?action=approve&id=<?= $req['id'] ?>&csrf_token=<?= urlencode($csrf) ?>"
-                         class="btn btn-sm btn-success me-1 btn-approve"
-                         data-id="<?= $req['id'] ?>"
-                         data-name="<?= sanitize($req['employee_name']) ?>"
-                         title="Approve">
-                        <i class="bi bi-check-lg"></i> Approve
-                      </a>
-                      <button type="button"
-                              class="btn btn-sm btn-danger btn-reject"
-                              data-id="<?= $req['id'] ?>"
-                              data-name="<?= sanitize($req['employee_name']) ?>"
-                              data-csrf="<?= $csrf ?>"
-                              title="Reject">
-                        <i class="bi bi-x-lg"></i> Reject
-                      </button>
-                    <?php else: ?>
-                      <span class="text-muted small">—</span>
-                    <?php endif; ?>
-                  </td>
-                <?php endif; ?>
+                <td class="text-center text-nowrap">
+                  <a href="view.php?id=<?= $req['id'] ?>" class="btn btn-sm btn-outline-primary me-1" title="View">
+                    <i class="bi bi-eye"></i>
+                  </a>
+                  <?php if ($_SESSION['role'] === 'admin' && $req['status'] === 'pending'): ?>
+                    <a href="action.php?action=approve&id=<?= $req['id'] ?>&csrf_token=<?= urlencode($csrf) ?>"
+                       class="btn btn-sm btn-success me-1 btn-approve"
+                       data-id="<?= $req['id'] ?>"
+                       data-name="<?= sanitize($req['employee_name']) ?>"
+                       title="Approve">
+                      <i class="bi bi-check-lg"></i> Approve
+                    </a>
+                    <button type="button"
+                            class="btn btn-sm btn-danger btn-reject"
+                            data-id="<?= $req['id'] ?>"
+                            data-name="<?= sanitize($req['employee_name']) ?>"
+                            data-csrf="<?= $csrf ?>"
+                            title="Reject">
+                      <i class="bi bi-x-lg"></i> Reject
+                    </button>
+                  <?php endif; ?>
+                </td>
               </tr>
             <?php endforeach; ?>
           </tbody>
