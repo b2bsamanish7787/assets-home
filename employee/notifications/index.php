@@ -1,13 +1,13 @@
 <?php
 /**
- * File: admin/notifications/index.php
- * Description: Notifications centre for admin, HR, and employee roles with mark-all-read via AJAX.
+ * File: employee/notifications/index.php
+ * Description: Notifications centre for employees — shows only personal notifications.
  * Author: Buzznation IT Team
  */
 
 require_once '../../config/functions.php';
 checkLogin();
-checkRole(['admin', 'hr']);
+checkRole(['employee']);
 
 $currentUserId = (int)$_SESSION['user_id'];
 
@@ -15,27 +15,27 @@ $currentUserId = (int)$_SESSION['user_id'];
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['mark_all_read'])) {
     if (!validateCSRF($_POST['csrf_token'] ?? '')) {
         flashMessage('error', 'Invalid security token.');
-        header('Location: ' . SITE_URL . '/admin/notifications/index.php');
+        header('Location: ' . SITE_URL . '/employee/notifications/index.php');
         exit;
     }
     $pdo->prepare("UPDATE notifications SET is_read = 1
-                   WHERE (user_id = :uid OR user_id IS NULL) AND is_read = 0")
+                   WHERE user_id = :uid AND is_read = 0")
         ->execute([':uid' => $currentUserId]);
     flashMessage('success', 'All notifications marked as read.');
-    header('Location: ' . SITE_URL . '/admin/notifications/index.php');
+    header('Location: ' . SITE_URL . '/employee/notifications/index.php');
     exit;
 }
 
-// Fetch notifications for current user (personal + broadcast)
+// Fetch only personal notifications for this employee (no broadcast/NULL rows)
 $stmt = $pdo->prepare("SELECT * FROM notifications
-                        WHERE user_id = :uid OR user_id IS NULL
+                        WHERE user_id = :uid
                         ORDER BY created_at DESC");
 $stmt->execute([':uid' => $currentUserId]);
 $notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 $unreadCount = array_reduce($notifications, fn($c, $n) => $c + ($n['is_read'] ? 0 : 1), 0);
 
-$pageTitle = 'Notifications';
+$pageTitle = 'My Notifications';
 include '../../includes/header.php';
 include '../../includes/sidebar.php';
 ?>
@@ -45,7 +45,7 @@ include '../../includes/sidebar.php';
 
     <div class="d-flex justify-content-between align-items-center mb-4">
       <h4 class="mb-0">
-        <i class="bi bi-bell-fill me-2 text-primary"></i>Notifications
+        <i class="bi bi-bell-fill me-2 text-primary"></i>My Notifications
         <?php if ($unreadCount > 0): ?>
           <span class="badge bg-danger ms-1"><?= $unreadCount ?> unread</span>
         <?php endif; ?>
@@ -72,7 +72,7 @@ include '../../includes/sidebar.php';
     <!-- Notifications Table -->
     <div class="card shadow-sm">
       <div class="card-header bg-light fw-semibold">
-        <i class="bi bi-list-ul me-1"></i>All Notifications
+        <i class="bi bi-list-ul me-1"></i>My Notifications
       </div>
       <div class="card-body p-0">
         <div class="table-responsive">
@@ -179,7 +179,7 @@ $(function () {
           row.removeClass('table-warning fw-semibold');
           row.find('.badge.bg-danger').replaceWith('<span class="badge bg-light text-secondary border">Read</span>');
           btn.replaceWith('<span class="text-muted"><i class="bi bi-check-all"></i></span>');
-          // Immediately update the navbar badge counter
+          // Update the navbar badge counter
           const badge    = $('#notif-count');
           const newCount = Math.max(0, (parseInt(badge.text(), 10) || 0) - 1);
           if (newCount === 0) {

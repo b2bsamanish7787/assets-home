@@ -10,11 +10,16 @@ $currentUser = $_SESSION['name'] ?? 'User';
 $currentRole = $_SESSION['role'] ?? '';
 
 // Unread notification count
+// Employees only see their own notifications; admin/hr also see broadcast (user_id IS NULL) ones.
 $unreadCount = 0;
 if (!empty($_SESSION['user_id'])) {
     global $pdo;
     try {
-        $stmt = $pdo->prepare("SELECT COUNT(*) FROM notifications WHERE (user_id = ? OR user_id IS NULL) AND is_read = 0");
+        if ($currentRole === 'employee') {
+            $stmt = $pdo->prepare("SELECT COUNT(*) FROM notifications WHERE user_id = ? AND is_read = 0");
+        } else {
+            $stmt = $pdo->prepare("SELECT COUNT(*) FROM notifications WHERE (user_id = ? OR user_id IS NULL) AND is_read = 0");
+        }
         $stmt->execute([$_SESSION['user_id']]);
         $unreadCount = (int)$stmt->fetchColumn();
     } catch (Exception $e) { /* silence */ }
@@ -55,7 +60,7 @@ if (!empty($_SESSION['user_id'])) {
 
     <div class="ms-auto d-flex align-items-center gap-3">
       <!-- Notification Bell -->
-      <a href="<?= SITE_URL ?>/admin/notifications/index.php" class="text-white position-relative notification-bell">
+      <a href="<?= SITE_URL ?>/<?= $currentRole === 'employee' ? 'employee' : 'admin' ?>/notifications/index.php" class="text-white position-relative notification-bell">
         <i class="bi bi-bell fs-5"></i>
         <?php if ($unreadCount > 0): ?>
           <span class="badge bg-danger notification-badge" id="notif-count"><?= $unreadCount ?></span>
