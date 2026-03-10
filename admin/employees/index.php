@@ -196,11 +196,10 @@ include __DIR__ . '/../../includes/sidebar.php';
   </div>
 </div><!-- /.main-content -->
 
+<?php
+$extraScripts = <<<'JS'
 <script>
-const siteUrl = '<?= SITE_URL ?>';
-
-// DataTable init
-$(document).ready(function () {
+$(function () {
   $('#employeesTable').DataTable({
     pageLength: 25,
     order: [[0, 'asc']],
@@ -270,5 +269,6 @@ $(document).ready(function () {
   });
 });
 </script>
+JS;
 
-<?php include __DIR__ . '/../../includes/footer.php'; ?>
+include __DIR__ . '/../../includes/footer.php';
