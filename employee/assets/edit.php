@@ -1,7 +1,7 @@
 <?php
 /**
- * File: employee/assets/submit.php
- * Description: Employee form to submit a personally held or company asset with file upload and email notifications.
+ * File: employee/assets/edit.php
+ * Description: Employee form to edit a pending (unapproved) asset submission.
  * Author: Buzznation IT Team
  */
 
@@ -10,14 +10,39 @@ checkLogin();
 checkRole(['employee']);
 
 $currentUserId = (int)$_SESSION['user_id'];
+$assetId       = (int)($_GET['id'] ?? $_POST['asset_id'] ?? 0);
 $errors        = [];
-$formData      = [];
+
+if (!$assetId) {
+    flashMessage('error', 'Invalid asset ID.');
+    header('Location: my_assets.php');
+    exit;
+}
+
+// Load only if this asset is pending AND submitted by the current employee
+$assetStmt = $pdo->prepare(
+    "SELECT a.*, c.name AS category_name
+     FROM assets a
+     LEFT JOIN categories c ON c.id = a.category_id
+     WHERE a.id = ? AND a.submitted_by = ? AND a.approval_status = 'pending'"
+);
+$assetStmt->execute([$assetId, $currentUserId]);
+$asset = $assetStmt->fetch(PDO::FETCH_ASSOC);
+
+if (!$asset) {
+    flashMessage('danger', 'Asset not found, or it has already been approved and can no longer be edited.');
+    header('Location: my_assets.php');
+    exit;
+}
+
+// Pre-fill form from existing asset
+$formData = $asset;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // CSRF
     if (!validateCSRF($_POST['csrf_token'] ?? '')) {
         flashMessage('error', 'Invalid security token. Please try again.');
-        header('Location: ' . SITE_URL . '/employee/assets/submit.php');
+        header('Location: edit.php?id=' . $assetId);
         exit;
     }
 
@@ -28,138 +53,116 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $formData['serial_number'] = sanitize($_POST['serial_number'] ?? '');
     $formData['receive_date']  = sanitize($_POST['receive_date']  ?? '');
     $formData['purchased_by']  = sanitize($_POST['purchased_by']  ?? '');
-    $consentChecked            = isset($_POST['consent']) ? true : false;
-
-    // Resolve the actual purchaser name for DB storage
-    if ($formData['purchased_by'] === 'me') {
-        $firstName = trim($_SESSION['first_name'] ?? '');
-        $lastName  = trim($_SESSION['last_name']  ?? '');
-        if ($firstName || $lastName) {
-            $purchasedByName = trim($firstName . ' ' . $lastName);
-        } else {
-            $nameStmt = $pdo->prepare("SELECT CONCAT(first_name, ' ', last_name) FROM users WHERE id = ?");
-            $nameStmt->execute([$currentUserId]);
-            $purchasedByName = $nameStmt->fetchColumn() ?: 'Employee';
-        }
-    } else {
-        $purchasedByName = COMPANY_NAME;
-    }
 
     // Validate
     if (!$formData['category_id'])  $errors[] = 'Please select a category.';
     if (!$formData['asset_name'])   $errors[] = 'Asset name is required.';
     if (!$formData['receive_date']) $errors[] = 'Receive date is required.';
     if (!in_array($formData['purchased_by'], ['me', 'company'])) $errors[] = 'Please select who purchased the asset.';
-    if (!$consentChecked) $errors[] = 'You must confirm the consent statement.';
 
-    // File upload — required only when purchased by employee
-    $billPath = null;
+    // Resolve purchaser name
     if ($formData['purchased_by'] === 'me') {
-        if (empty($_FILES['bill']['name'])) {
-            $errors[] = 'Please upload the bill/receipt for assets purchased by you.';
-        } else {
-            $file        = $_FILES['bill'];
-            $maxBytes    = 5 * 1024 * 1024; // 5 MB
-            $allowedExts = ['jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'png' => 'image/png', 'pdf' => 'application/pdf'];
-            $allowedMimes = ['image/jpeg', 'image/png', 'application/pdf'];
-            $ext         = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        $firstName = trim($_SESSION['first_name'] ?? '');
+        $lastName  = trim($_SESSION['last_name']  ?? '');
+        $purchasedByName = trim($firstName . ' ' . $lastName) ?: 'Employee';
+    } else {
+        $purchasedByName = COMPANY_NAME;
+    }
 
-            if ($file['error'] !== UPLOAD_ERR_OK) {
-                $errors[] = 'File upload error (code ' . $file['error'] . '). Please try again.';
-            } elseif ($file['size'] > $maxBytes) {
-                $errors[] = 'Bill file must not exceed 5 MB.';
-            } elseif (!isset($allowedExts[$ext])) {
+    // Handle optional bill upload (replace existing)
+    $billPath = $asset['bill_file']; // keep existing by default
+    if (!empty($_FILES['bill']['name'])) {
+        $file         = $_FILES['bill'];
+        $maxBytes     = 5 * 1024 * 1024; // 5 MB
+        $allowedExts  = ['jpg', 'jpeg', 'png', 'pdf'];
+        $allowedMimes = ['image/jpeg', 'image/png', 'application/pdf'];
+        $ext          = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+
+        if ($file['error'] !== UPLOAD_ERR_OK) {
+            $errors[] = 'File upload error (code ' . $file['error'] . '). Please try again.';
+        } elseif ($file['size'] > $maxBytes) {
+            $errors[] = 'Bill file must not exceed 5 MB.';
+        } elseif (!in_array($ext, $allowedExts, true)) {
+            $errors[] = 'Only PDF, JPG, and PNG files are allowed for the bill.';
+        } else {
+            $detectedMime = false;
+            if (function_exists('finfo_open')) {
+                try {
+                    $finfo        = new finfo(FILEINFO_MIME_TYPE);
+                    $detectedMime = $finfo->file($file['tmp_name']);
+                } catch (Exception $e) {
+                    $detectedMime = false;
+                }
+            }
+            if ($detectedMime && !in_array($detectedMime, $allowedMimes, true)) {
                 $errors[] = 'Only PDF, JPG, and PNG files are allowed for the bill.';
             } else {
-                // MIME check — prefer finfo, fall back gracefully if unavailable
-                $detectedMime = false;
-                if (function_exists('finfo_open')) {
-                    try {
-                        $finfo        = new finfo(FILEINFO_MIME_TYPE);
-                        $detectedMime = $finfo->file($file['tmp_name']);
-                    } catch (Exception $e) {
-                        $detectedMime = false;
-                    }
-                }
-                if ($detectedMime && !in_array($detectedMime, $allowedMimes, true)) {
-                    $errors[] = 'Only PDF, JPG, and PNG files are allowed for the bill.';
-                } else {
-                    $newName = uniqid('bill_', true) . '.' . $ext;
-                    $destDir = defined('UPLOAD_PATH')
-                        ? rtrim(UPLOAD_PATH, '/') . '/bills/'
-                        : __DIR__ . '/../../assets/uploads/bills/';
+                $newName = uniqid('bill_', true) . '.' . $ext;
+                $destDir = defined('UPLOAD_PATH')
+                    ? rtrim(UPLOAD_PATH, '/') . '/bills/'
+                    : __DIR__ . '/../../assets/uploads/bills/';
 
-                    if (!is_dir($destDir) && !mkdir($destDir, 0755, true)) {
-                        $errors[] = 'Upload directory could not be created. Please contact the administrator.';
-                    } elseif (!move_uploaded_file($file['tmp_name'], $destDir . $newName)) {
-                        $errors[] = 'Failed to save uploaded file. Please try again.';
-                    } else {
-                        $billPath = 'bills/' . $newName;
+                if (!is_dir($destDir) && !mkdir($destDir, 0755, true)) {
+                    $errors[] = 'Upload directory could not be created. Please contact the administrator.';
+                } elseif (!move_uploaded_file($file['tmp_name'], $destDir . $newName)) {
+                    $errors[] = 'Failed to save uploaded file. Please try again.';
+                } else {
+                    // Delete old bill file if present
+                    if ($asset['bill_file']) {
+                        $uploadBase = defined('UPLOAD_PATH')
+                            ? rtrim(UPLOAD_PATH, '/')
+                            : __DIR__ . '/../../assets/uploads';
+                        $oldPath = $uploadBase . '/' . $asset['bill_file'];
+                        if (file_exists($oldPath)) {
+                            @unlink($oldPath);
+                        }
                     }
+                    $billPath = 'bills/' . $newName;
                 }
             }
         }
+    } elseif ($formData['purchased_by'] === 'me' && !$billPath) {
+        $errors[] = 'Please upload the bill/receipt for assets purchased by you.';
     }
 
     if (empty($errors)) {
         try {
-            $pdo->beginTransaction();
+            // Verify the asset is still pending before saving (guard against concurrent approval)
+            $checkStmt = $pdo->prepare(
+                "SELECT approval_status FROM assets WHERE id = ? AND submitted_by = ?"
+            );
+            $checkStmt->execute([$assetId, $currentUserId]);
+            $currentStatus = $checkStmt->fetchColumn();
 
-            // Insert asset
-            $stmt = $pdo->prepare("INSERT INTO assets
-                                   (category_id, asset_name, model_number, serial_number, receive_date,
-                                    purchased_by, purchased_by_name, bill_file, status, approval_status,
-                                    assigned_to, submitted_by, created_at)
-                                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'assigned', 'pending', ?, ?, NOW())");
-            $stmt->execute([
+            if ($currentStatus !== 'pending') {
+                flashMessage('danger', 'This asset has been approved and can no longer be edited.');
+                header('Location: my_assets.php');
+                exit;
+            }
+
+            $pdo->prepare(
+                "UPDATE assets
+                 SET category_id = ?, asset_name = ?, model_number = ?, serial_number = ?,
+                     receive_date = ?, purchased_by = ?, purchased_by_name = ?, bill_file = ?
+                 WHERE id = ? AND submitted_by = ? AND approval_status = 'pending'"
+            )->execute([
                 $formData['category_id'],
                 $formData['asset_name'],
-                $formData['model_number']  ?: null,
+                $formData['model_number'] ?: null,
                 $formData['serial_number'] ?: null,
                 $formData['receive_date'],
                 $formData['purchased_by'],
-                $purchasedByName ?: null,
+                $purchasedByName,
                 $billPath,
-                $currentUserId,
+                $assetId,
                 $currentUserId,
             ]);
-            $assetId = (int)$pdo->lastInsertId();
 
-            // Insert asset history
-            $pdo->prepare("INSERT INTO asset_history (asset_id, action, to_user, created_by, created_at)
-                           VALUES (?, 'submitted', ?, ?, NOW())")
-                ->execute([$assetId, $currentUserId, $currentUserId]);
-
-            $pdo->commit();
-
-            // Notify admin/HR
-            $notifMsg  = ($_SESSION['first_name'] ?? 'An employee') . ' submitted a new asset: ' . $formData['asset_name'];
-            $notifLink = SITE_URL . '/admin/assets/view.php?id=' . $assetId;
-            sendNotification(null, 'asset_submitted', $notifMsg, $notifLink);
-
-            // Email admins and HR
-            $emailStmt = $pdo->query("SELECT email, first_name FROM users WHERE role IN ('admin','hr') AND status='active'");
-            $recipients = $emailStmt->fetchAll(PDO::FETCH_ASSOC);
-            $subject    = SITE_NAME . ': New Asset Submitted';
-            foreach ($recipients as $recipient) {
-                if (function_exists('emailAssetSubmission')) {
-                    $body = emailAssetSubmission(trim($_SESSION['first_name'] ?? 'An employee'), $formData['asset_name']);
-                } else {
-                    $body = '<p>Hi ' . htmlspecialchars($recipient['first_name']) . ',</p>'
-                          . '<p><strong>' . htmlspecialchars($_SESSION['first_name'] ?? 'An employee') . '</strong> submitted a new asset: '
-                          . htmlspecialchars($formData['asset_name']) . '.</p>'
-                          . '<p><a href="' . $notifLink . '">View Asset</a></p>';
-                }
-                sendEmail($recipient['email'], $subject, $body);
-            }
-
-            logActivity($currentUserId, 'asset_submitted', 'Submitted asset: ' . $formData['asset_name']);
-            flashMessage('success', 'Asset submitted successfully!');
-            header('Location: ' . SITE_URL . '/employee/assets/my_assets.php');
+            logActivity($currentUserId, 'asset_edited', 'Edited pending asset submission: ' . $formData['asset_name']);
+            flashMessage('success', 'Asset updated successfully!');
+            header('Location: my_assets.php');
             exit;
-
         } catch (Exception $e) {
-            $pdo->rollBack();
             $errors[] = 'A database error occurred. Please try again.';
         }
     }
@@ -169,7 +172,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $categories = $pdo->query("SELECT id, name FROM categories WHERE status='active' ORDER BY name")
                   ->fetchAll(PDO::FETCH_ASSOC);
 
-$pageTitle = 'Submit Asset';
+$pageTitle = 'Edit Asset Submission';
 include '../../includes/header.php';
 include '../../includes/sidebar.php';
 ?>
@@ -178,13 +181,16 @@ include '../../includes/sidebar.php';
   <div class="container-fluid py-4">
 
     <div class="d-flex justify-content-between align-items-center mb-4">
-      <h4 class="mb-0"><i class="bi bi-box-arrow-in-down me-2 text-primary"></i>Submit Asset</h4>
+      <h4 class="mb-0"><i class="bi bi-pencil-square me-2 text-primary"></i>Edit Asset Submission</h4>
       <a href="<?= SITE_URL ?>/employee/assets/my_assets.php" class="btn btn-outline-secondary btn-sm">
         <i class="bi bi-arrow-left me-1"></i>Back to My Assets
       </a>
     </div>
 
-    <?= getFlash() ?>
+    <div class="alert alert-info">
+      <i class="bi bi-info-circle me-2"></i>
+      You can edit this submission while it is pending admin approval. Once approved, editing is disabled.
+    </div>
 
     <?php if (!empty($errors)): ?>
     <div class="alert alert-danger alert-dismissible">
@@ -201,20 +207,24 @@ include '../../includes/sidebar.php';
     <div class="card shadow-sm">
       <div class="card-header bg-light fw-semibold">
         <i class="bi bi-clipboard-fill me-1"></i>Asset Details
+        <span class="badge bg-warning text-dark ms-2">
+          <i class="bi bi-hourglass-split me-1"></i>Pending Approval
+        </span>
       </div>
       <div class="card-body">
-        <form method="POST" action="" enctype="multipart/form-data" id="submitAssetForm" novalidate>
+        <form method="POST" action="" enctype="multipart/form-data" id="editAssetForm" novalidate>
           <input type="hidden" name="csrf_token" value="<?= generateCSRF() ?>">
+          <input type="hidden" name="asset_id" value="<?= $assetId ?>">
 
           <div class="row g-4">
 
             <!-- Category -->
             <div class="col-md-6">
               <label class="form-label fw-semibold">Category <span class="text-danger">*</span></label>
-              <select name="category_id" class="form-select <?= !empty($errors) && !($formData['category_id'] ?? 0) ? 'is-invalid' : '' ?>" required>
+              <select name="category_id" class="form-select" required>
                 <option value="">— Select Category —</option>
                 <?php foreach ($categories as $cat): ?>
-                  <option value="<?= $cat['id'] ?>" <?= ($formData['category_id'] ?? 0) == $cat['id'] ? 'selected' : '' ?>>
+                  <option value="<?= $cat['id'] ?>" <?= (int)($formData['category_id'] ?? 0) == $cat['id'] ? 'selected' : '' ?>>
                     <?= htmlspecialchars($cat['name']) ?>
                   </option>
                 <?php endforeach; ?>
@@ -277,22 +287,24 @@ include '../../includes/sidebar.php';
 
             <!-- Bill Upload (shown only if purchased_by = me) -->
             <div class="col-md-12" id="billUploadSection" style="display:none;">
-              <label class="form-label fw-semibold">Upload Bill / Receipt <span class="text-danger">*</span></label>
+              <label class="form-label fw-semibold">
+                Upload Bill / Receipt
+                <?php if ($asset['bill_file']): ?>
+                  <span class="text-muted fw-normal">(leave empty to keep existing bill)</span>
+                <?php else: ?>
+                  <span class="text-danger">*</span>
+                <?php endif; ?>
+              </label>
+              <?php if ($asset['bill_file']): ?>
+                <div class="mb-2">
+                  <a href="<?= SITE_URL ?>/assets/uploads/<?= implode('/', array_map('rawurlencode', explode('/', $asset['bill_file']))) ?>"
+                     target="_blank" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-file-earmark me-1"></i>View Current Bill
+                  </a>
+                </div>
+              <?php endif; ?>
               <input type="file" name="bill" class="form-control" accept=".pdf,.jpg,.jpeg,.png" id="billInput">
               <div class="form-text">Accepted: PDF, JPG, PNG. Maximum size: 5 MB.</div>
-            </div>
-
-            <!-- Consent -->
-            <div class="col-12">
-              <div class="form-check">
-                <input class="form-check-input <?= !empty($errors) && !($consentChecked ?? false) ? 'is-invalid' : '' ?>"
-                       type="checkbox" name="consent" id="consentCheck"
-                       <?= !empty($formData) && isset($_POST['consent']) ? 'checked' : '' ?> required>
-                <label class="form-check-label" for="consentCheck">
-                  I confirm that this asset is in my possession and I am responsible for its safety and condition.
-                </label>
-                <div class="invalid-feedback">You must accept the consent statement.</div>
-              </div>
             </div>
 
           </div><!-- /row -->
@@ -300,7 +312,7 @@ include '../../includes/sidebar.php';
           <hr class="my-4">
           <div class="d-flex gap-2">
             <button type="submit" class="btn btn-primary">
-              <i class="bi bi-send-fill me-1"></i>Submit Asset
+              <i class="bi bi-save me-1"></i>Save Changes
             </button>
             <a href="<?= SITE_URL ?>/employee/assets/my_assets.php" class="btn btn-outline-secondary">
               <i class="bi bi-x-circle me-1"></i>Cancel
@@ -318,32 +330,28 @@ include '../../includes/sidebar.php';
 
 <script>
 $(function () {
-  // Toggle bill upload section
   function toggleBill() {
-    const val = $('input[name="purchased_by"]:checked').val();
+    var val = $('input[name="purchased_by"]:checked').val();
     if (val === 'me') {
       $('#billUploadSection').slideDown(200);
-      $('#billInput').prop('required', true);
     } else {
       $('#billUploadSection').slideUp(200);
-      $('#billInput').prop('required', false).val('');
+      $('#billInput').val('');
     }
   }
 
   $('input[name="purchased_by"]').on('change', toggleBill);
-  toggleBill(); // Run on load in case of POST-back
+  toggleBill();
 
-  // Client-side file size check
   $('#billInput').on('change', function () {
-    const maxBytes = 5 * 1024 * 1024;
+    var maxBytes = 5 * 1024 * 1024;
     if (this.files[0] && this.files[0].size > maxBytes) {
       Swal.fire({ icon: 'warning', title: 'File too large', text: 'The bill file must not exceed 5 MB.' });
       $(this).val('');
     }
   });
 
-  // Bootstrap validation
-  $('#submitAssetForm').on('submit', function (e) {
+  $('#editAssetForm').on('submit', function (e) {
     if (!this.checkValidity()) {
       e.preventDefault();
       e.stopPropagation();

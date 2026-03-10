@@ -21,6 +21,7 @@ try {
                 a.model_number,
                 a.serial_number,
                 a.status,
+                a.approval_status,
                 c.name         AS category_name,
                 CONCAT(u.first_name, ' ', u.last_name) AS assigned_to_name
          FROM assets a
@@ -93,6 +94,11 @@ include __DIR__ . '/../../includes/sidebar.php';
                   <span class="badge bg-<?= $statusBadge ?>">
                     <?= $statusLabel ?>
                   </span>
+                  <?php if (($asset['approval_status'] ?? 'approved') === 'pending'): ?>
+                    <span class="badge bg-warning text-dark ms-1">
+                      <i class="bi bi-hourglass-split"></i> Pending Approval
+                    </span>
+                  <?php endif; ?>
                 </td>
                 <td class="text-center text-nowrap">
                   <a href="view.php?id=<?= $asset['id'] ?>"

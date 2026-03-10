@@ -150,3 +150,9 @@ ALTER TABLE transfer_consent ADD COLUMN IF NOT EXISTS type ENUM('transfer','assi
 
 -- Migration: add purchased_by_name to store the actual purchaser name (employee full name or company name)
 ALTER TABLE assets ADD COLUMN IF NOT EXISTS purchased_by_name VARCHAR(150) NULL AFTER purchased_by;
+
+-- Migration: add approval_status so admin can approve employee-submitted assets before they appear as confirmed
+ALTER TABLE assets ADD COLUMN IF NOT EXISTS approval_status ENUM('pending','approved') NOT NULL DEFAULT 'approved' AFTER status;
+
+-- Migration: extend asset_history action enum to include 'approved'
+ALTER TABLE asset_history MODIFY COLUMN action ENUM('submitted','assigned','transferred','returned','service_requested','service_approved','service_completed','approved') NOT NULL;

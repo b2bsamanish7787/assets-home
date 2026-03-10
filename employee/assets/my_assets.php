@@ -12,7 +12,8 @@ checkRole(['employee']);
 $currentUserId = (int)$_SESSION['user_id'];
 
 $stmt = $pdo->prepare("SELECT a.id, a.asset_name, c.name AS category_name, a.model_number,
-                               a.serial_number, a.receive_date, a.purchased_by, a.purchased_by_name, a.status
+                               a.serial_number, a.receive_date, a.purchased_by, a.purchased_by_name,
+                               a.status, a.approval_status, a.submitted_by
                         FROM assets a
                         LEFT JOIN categories c ON c.id = a.category_id
                         WHERE a.assigned_to = ?
@@ -90,12 +91,25 @@ include '../../includes/sidebar.php';
                     </span>
                   <?php endif; ?>
                 </td>
-                <td><span class="badge <?= $sc ?>"><?= ucfirst(str_replace('_', ' ', $asset['status'])) ?></span></td>
+                <td><span class="badge <?= $sc ?>"><?= ucfirst(str_replace('_', ' ', $asset['status'])) ?></span>
+                  <?php if (($asset['approval_status'] ?? 'approved') === 'pending'): ?>
+                    <span class="badge bg-warning text-dark ms-1">
+                      <i class="bi bi-hourglass-split"></i> Pending Approval
+                    </span>
+                  <?php endif; ?>
+                </td>
                 <td class="text-center">
-                  <a href="<?= SITE_URL ?>/employee/service/new.php?asset_id=<?= $asset['id'] ?>"
-                     class="btn btn-outline-warning btn-sm" title="Request Service">
-                    <i class="bi bi-tools me-1"></i>Service
-                  </a>
+                  <?php if (($asset['approval_status'] ?? 'approved') === 'pending' && (int)$asset['submitted_by'] === $currentUserId): ?>
+                    <a href="<?= SITE_URL ?>/employee/assets/edit.php?id=<?= $asset['id'] ?>"
+                       class="btn btn-outline-primary btn-sm" title="Edit Submission">
+                      <i class="bi bi-pencil me-1"></i>Edit
+                    </a>
+                  <?php else: ?>
+                    <a href="<?= SITE_URL ?>/employee/service/new.php?asset_id=<?= $asset['id'] ?>"
+                       class="btn btn-outline-warning btn-sm" title="Request Service">
+                      <i class="bi bi-tools me-1"></i>Service
+                    </a>
+                  <?php endif; ?>
                 </td>
               </tr>
               <?php endforeach; ?>

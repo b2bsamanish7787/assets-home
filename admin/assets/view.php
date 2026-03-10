@@ -32,6 +32,7 @@ try {
                 a.purchased_by_name,
                 a.bill_file,
                 a.status,
+                a.approval_status,
                 a.created_at,
                 c.name AS category_name,
                 CONCAT(u.first_name, ' ', u.last_name) AS assigned_to_name,
@@ -114,6 +115,7 @@ $actionMeta = [
     'service_requested' => ['icon' => 'bi-tools',             'color' => 'text-warning',   'label' => 'Service Requested'],
     'service_approved'  => ['icon' => 'bi-shield-check',      'color' => 'text-success',   'label' => 'Service Approved'],
     'service_completed' => ['icon' => 'bi-check2-all',        'color' => 'text-primary',   'label' => 'Service Completed'],
+    'approved'          => ['icon' => 'bi-check2-circle',     'color' => 'text-success',   'label' => 'Approved'],
 ];
 
 $srStatusBadge = [
@@ -149,6 +151,16 @@ include __DIR__ . '/../../includes/sidebar.php';
     </h4>
     <div class="d-flex gap-2 flex-wrap">
       <?php if ($_SESSION['role'] === 'admin'): ?>
+        <?php if (($asset['approval_status'] ?? 'approved') === 'pending'): ?>
+          <form method="POST" action="approve.php" class="d-inline"
+                onsubmit="return confirm('Approve this asset submission?');">
+            <input type="hidden" name="csrf_token" value="<?= generateCSRF() ?>">
+            <input type="hidden" name="asset_id" value="<?= $assetId ?>">
+            <button type="submit" class="btn btn-success btn-sm">
+              <i class="bi bi-check2-circle me-1"></i>Approve
+            </button>
+          </form>
+        <?php endif; ?>
         <?php if ($asset['status'] === 'available'): ?>
           <a href="assign.php?id=<?= $assetId ?>" class="btn btn-success btn-sm">
             <i class="bi bi-person-check me-1"></i>Assign
@@ -225,7 +237,7 @@ include __DIR__ . '/../../includes/sidebar.php';
             <?php if ($asset['bill_file']): ?>
               <dt class="col-sm-4 text-muted fw-normal">Purchase Bill</dt>
               <dd class="col-sm-8">
-                <a href="<?= SITE_URL ?>/assets/uploads/<?= urlencode($asset['bill_file']) ?>"
+                <a href="<?= SITE_URL ?>/assets/uploads/<?= implode('/', array_map('rawurlencode', explode('/', $asset['bill_file']))) ?>"
                    target="_blank" class="btn btn-outline-primary btn-sm">
                   <i class="bi bi-file-earmark me-1"></i>View Bill
                 </a>
@@ -235,6 +247,19 @@ include __DIR__ . '/../../includes/sidebar.php';
             <dt class="col-sm-4 text-muted fw-normal">Status</dt>
             <dd class="col-sm-8">
               <span class="badge bg-<?= $statusBadge ?>"><?= $statusLabel ?></span>
+            </dd>
+
+            <dt class="col-sm-4 text-muted fw-normal">Approval</dt>
+            <dd class="col-sm-8">
+              <?php if (($asset['approval_status'] ?? 'approved') === 'pending'): ?>
+                <span class="badge bg-warning text-dark">
+                  <i class="bi bi-hourglass-split me-1"></i>Pending Approval
+                </span>
+              <?php else: ?>
+                <span class="badge bg-success">
+                  <i class="bi bi-check2-circle me-1"></i>Approved
+                </span>
+              <?php endif; ?>
             </dd>
 
             <dt class="col-sm-4 text-muted fw-normal">Submitted By</dt>
