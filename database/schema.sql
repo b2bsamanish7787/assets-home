@@ -111,6 +111,7 @@ CREATE TABLE IF NOT EXISTS transfer_consent (
   receive_date DATE,
   consent_given TINYINT(1) DEFAULT 0,
   status ENUM('pending','accepted') DEFAULT 'pending',
+  accepted_at TIMESTAMP NULL DEFAULT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (asset_id) REFERENCES assets(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -140,3 +141,6 @@ SET FOREIGN_KEY_CHECKS = 1;
 
 -- NOTE: Run database/seed.php to insert the default admin user
 -- Default admin credentials: admin@buzznationmarketing.com / Admin@123
+
+-- Migration: add accepted_at to transfer_consent (safe to run on existing databases)
+ALTER TABLE transfer_consent ADD COLUMN IF NOT EXISTS accepted_at TIMESTAMP NULL DEFAULT NULL AFTER status;

@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $consent) {
 
             // Mark consent as accepted
             $pdo->prepare("UPDATE transfer_consent
-                           SET consent_given = 1, status = 'accepted', receive_date = ?, accepted_at = NOW()
+                           SET consent_given = 1, status = 'accepted', receive_date = ?
                            WHERE id = ?")
                 ->execute([$receiveDate, $consentId]);
 
