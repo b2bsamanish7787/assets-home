@@ -37,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $assetStmt->execute([$assetId]);
             $asset = $assetStmt->fetch();
 
-            if (!$asset || $asset['status'] !== 'available') {
+            if (!$asset || !in_array($asset['status'], ['available', 'returned'], true)) {
                 $errors[] = 'Selected asset is not available for assignment.';
             }
 
@@ -108,7 +108,7 @@ try {
         "SELECT a.id, a.asset_name, a.model_number, a.serial_number, c.name AS category_name
          FROM assets a
          LEFT JOIN categories c ON c.id = a.category_id
-         WHERE a.status = 'available'
+         WHERE a.status IN ('available', 'returned')
          ORDER BY a.asset_name ASC"
     )->fetchAll();
 
