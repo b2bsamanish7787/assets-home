@@ -86,7 +86,7 @@ switch ($type) {
                    a.created_at
             FROM assets a
             LEFT JOIN categories c ON c.id = a.category_id
-            WHERE a.status = 'available'
+            WHERE a.status IN ('available', 'returned')
         ";
         if ($categoryId > 0) {
             $sql .= " AND a.category_id = :category_id";

@@ -46,7 +46,7 @@ $sql2  = "SELECT a.id, a.asset_name, c.name AS category_name, a.model_number, a.
                  a.receive_date, a.purchased_by, a.status
           FROM assets a
           LEFT JOIN categories c ON c.id = a.category_id
-          WHERE a.status = 'available'";
+          WHERE a.status IN ('available', 'returned')";
 $params2 = [];
 if ($dateFrom) { $sql2 .= " AND a.receive_date >= :df2"; $params2[':df2'] = $dateFrom; }
 if ($dateTo)   { $sql2 .= " AND a.receive_date <= :dt2"; $params2[':dt2'] = $dateTo;   }
@@ -280,7 +280,7 @@ include '../../includes/sidebar.php';
                     <td><?= htmlspecialchars($row['serial_number'] ?? '—') ?></td>
                     <td><?= $row['receive_date'] ? date('d M Y', strtotime($row['receive_date'])) : '—' ?></td>
                     <td><?= htmlspecialchars(ucfirst($row['purchased_by'] ?? '—')) ?></td>
-                    <td><span class="badge bg-success">Available</span></td>
+                     <td><?php $badgeClass = ($row["status"] === "available") ? "bg-success" : "bg-secondary"; ?><span class="badge <?= $badgeClass ?>"><?= ucfirst($row["status"]) ?></span></td>
                   </tr>
                   <?php endforeach; ?>
                 </tbody>
