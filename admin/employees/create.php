@@ -1,7 +1,7 @@
 <?php
 /**
  * File: admin/employees/create.php
- * Description: Form to create a new employee account with auto-generated ID and welcome email
+ * Description: Form to create a new employee account with admin-entered ID and welcome email
  * Author: Buzznation IT Team
  */
 
@@ -12,7 +12,7 @@ checkLogin();
 checkRole(['admin']);
 
 $errors   = [];
-$formData = ['first_name' => '', 'last_name' => '', 'email' => '', 'role' => 'employee',
+$formData = ['employee_id' => '', 'first_name' => '', 'last_name' => '', 'email' => '', 'role' => 'employee',
              'manager_name' => '', 'manager_email' => '', 'designation' => '', 'department' => ''];
 
 // ── POST handler ──────────────────────────────────────────────────────────────
@@ -26,6 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Collect & sanitise raw input
     $formData = [
+        'employee_id'   => trim($_POST['employee_id']   ?? ''),
         'first_name'    => trim($_POST['first_name']    ?? ''),
         'last_name'     => trim($_POST['last_name']     ?? ''),
         'email'         => trim($_POST['email']         ?? ''),
@@ -35,6 +36,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'designation'   => trim($_POST['designation']   ?? ''),
         'department'    => trim($_POST['department']    ?? ''),
     ];
+
+    // Validation
+    if ($formData['employee_id'] === '') {
+        $errors['employee_id'] = 'Employee ID is required.';
+    } else {
+        $dupEmp = $pdo->prepare("SELECT id FROM users WHERE employee_id = ?");
+        $dupEmp->execute([$formData['employee_id']]);
+        if ($dupEmp->fetch()) {
+            $errors['employee_id'] = 'This Employee ID is already in use.';
+        }
+    }
 
     // Validation
     if ($formData['first_name'] === '') {
@@ -67,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (empty($errors)) {
-        $employeeId = generateEmployeeId();
+        $employeeId = $formData['employee_id'];
         $tempPass   = generateTempPassword();
         $hashed     = password_hash($tempPass, PASSWORD_DEFAULT);
         $fullName   = $formData['first_name'] . ' ' . $formData['last_name'];
@@ -125,13 +137,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Pre-generate employee ID for display in form
-try {
-    $nextEmpId = generateEmployeeId();
-} catch (Exception $e) {
-    $nextEmpId = 'EMP001';
-}
-
 $csrf      = generateCSRF();
 $pageTitle = 'Add Employee — ' . SITE_NAME;
 
@@ -162,11 +167,16 @@ include __DIR__ . '/../../includes/sidebar.php';
       <form method="POST" action="create.php" novalidate>
         <input type="hidden" name="csrf_token" value="<?= $csrf ?>">
 
-        <!-- Employee ID (auto-generated, readonly) -->
+        <!-- Employee ID (admin-entered) -->
         <div class="mb-3">
-          <label class="form-label fw-semibold">Employee ID</label>
-          <input type="text" class="form-control bg-light" value="<?= sanitize($nextEmpId) ?>" readonly>
-          <div class="form-text">Auto-generated — assigned on save.</div>
+          <label for="employee_id" class="form-label fw-semibold">Employee ID <span class="text-danger">*</span></label>
+          <input type="text" id="employee_id" name="employee_id"
+                 class="form-control <?= isset($errors['employee_id']) ? 'is-invalid' : '' ?>"
+                 value="<?= sanitize($formData['employee_id']) ?>"
+                 placeholder="e.g. EMP042" required>
+          <?php if (isset($errors['employee_id'])): ?>
+            <div class="invalid-feedback"><?= sanitize($errors['employee_id']) ?></div>
+          <?php endif; ?>
         </div>
 
         <div class="row g-3">

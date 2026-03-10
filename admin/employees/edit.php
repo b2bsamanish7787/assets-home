@@ -38,6 +38,7 @@ if (!$employee) {
 
 // Populate form defaults from DB record
 $formData = [
+    'employee_id'   => $employee['employee_id']   ?? '',
     'first_name'    => $employee['first_name'],
     'last_name'     => $employee['last_name'],
     'email'         => $employee['email'],
@@ -60,6 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Collect & override form data with submitted values
     $formData = [
+        'employee_id'   => trim($_POST['employee_id']   ?? ''),
         'first_name'    => trim($_POST['first_name']    ?? ''),
         'last_name'     => trim($_POST['last_name']     ?? ''),
         'email'         => trim($_POST['email']         ?? ''),
@@ -72,6 +74,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     ];
 
     // Validation
+    if ($formData['employee_id'] === '') {
+        $errors['employee_id'] = 'Employee ID is required.';
+    } else {
+        $dupEmp = $pdo->prepare("SELECT id FROM users WHERE employee_id = ? AND id != ?");
+        $dupEmp->execute([$formData['employee_id'], $id]);
+        if ($dupEmp->fetch()) {
+            $errors['employee_id'] = 'This Employee ID is already in use by another account.';
+        }
+    }
+
     if ($formData['first_name'] === '') {
         $errors['first_name'] = 'First name is required.';
     }
@@ -108,6 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $stmt = $pdo->prepare("
                 UPDATE users SET
+                    employee_id   = ?,
                     first_name    = ?,
                     last_name     = ?,
                     email         = ?,
@@ -121,6 +134,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 WHERE id = ?
             ");
             $stmt->execute([
+                $formData['employee_id'],
                 $formData['first_name'],
                 $formData['last_name'],
                 $formData['email'],
@@ -182,11 +196,15 @@ include __DIR__ . '/../../includes/sidebar.php';
         <input type="hidden" name="csrf_token" value="<?= $csrf ?>">
         <input type="hidden" name="id" value="<?= $id ?>">
 
-        <!-- Employee ID (readonly) -->
+        <!-- Employee ID (editable) -->
         <div class="mb-3">
-          <label class="form-label fw-semibold">Employee ID</label>
-          <input type="text" class="form-control bg-light"
-                 value="<?= sanitize($employee['employee_id'] ?? '') ?>" readonly>
+          <label for="employee_id" class="form-label fw-semibold">Employee ID <span class="text-danger">*</span></label>
+          <input type="text" id="employee_id" name="employee_id"
+                 class="form-control <?= isset($errors['employee_id']) ? 'is-invalid' : '' ?>"
+                 value="<?= sanitize($formData['employee_id']) ?>" required>
+          <?php if (isset($errors['employee_id'])): ?>
+            <div class="invalid-feedback"><?= sanitize($errors['employee_id']) ?></div>
+          <?php endif; ?>
         </div>
 
         <div class="row g-3">
