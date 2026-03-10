@@ -416,3 +416,49 @@ function emailServiceRequest(string $employeeName, string $assetName): string
 </body></html>
 HTML;
 }
+
+/**
+ * Build a Service Request notification email addressed to the employee's manager.
+ */
+function emailManagerServiceRequest(string $managerName, string $employeeName, string $assetName, string $requestLink): string
+{
+    $siteName = SITE_NAME;
+    return <<<HTML
+<html><body style="font-family:Arial,sans-serif;background:#f4f6fb;padding:30px;">
+<div style="max-width:600px;margin:auto;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.1);">
+  <div style="background:#2c3e50;padding:20px 30px;"><h1 style="color:#fff;margin:0;font-size:22px;">{$siteName}</h1></div>
+  <div style="padding:30px;">
+    <h2 style="color:#2c3e50;">Service Request — Your Direct Report</h2>
+    <p>Hi {$managerName},</p>
+    <p>Your direct report <strong>{$employeeName}</strong> has submitted a service request for asset: <strong>{$assetName}</strong>.</p>
+    <p>This is an informational copy to keep you in the loop. The request is being handled by the admin/HR team.</p>
+    <a href="{$requestLink}" style="display:inline-block;padding:12px 24px;background:#2c3e50;color:#fff;border-radius:5px;text-decoration:none;">View Service Request</a>
+  </div>
+  <div style="padding:15px 30px;background:#f4f6fb;font-size:12px;color:#999;">© {$siteName}</div>
+</div>
+</body></html>
+HTML;
+}
+
+/**
+ * Build an Asset Request notification email addressed to the employee's manager.
+ */
+function emailManagerAssetRequest(string $managerName, string $employeeName, string $requirement, string $requestLink): string
+{
+    $siteName = SITE_NAME;
+    return <<<HTML
+<html><body style="font-family:Arial,sans-serif;background:#f4f6fb;padding:30px;">
+<div style="max-width:600px;margin:auto;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.1);">
+  <div style="background:#2c3e50;padding:20px 30px;"><h1 style="color:#fff;margin:0;font-size:22px;">{$siteName}</h1></div>
+  <div style="padding:30px;">
+    <h2 style="color:#2c3e50;">Asset Request — Your Direct Report</h2>
+    <p>Hi {$managerName},</p>
+    <p>Your direct report <strong>{$employeeName}</strong> has submitted a new asset request: <strong>{$requirement}</strong>.</p>
+    <p>This is an informational copy to keep you in the loop. The request is being handled by the admin/HR team.</p>
+    <a href="{$requestLink}" style="display:inline-block;padding:12px 24px;background:#2c3e50;color:#fff;border-radius:5px;text-decoration:none;">View Asset Request</a>
+  </div>
+  <div style="padding:15px 30px;background:#f4f6fb;font-size:12px;color:#999;">© {$siteName}</div>
+</div>
+</body></html>
+HTML;
+}

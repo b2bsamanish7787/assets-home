@@ -61,6 +61,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 sendEmail($recipient['email'], $subject, $body);
             }
 
+            // CC employee's manager
+            $mgrStmt = $pdo->prepare("SELECT manager_name, manager_email FROM users WHERE id = ? LIMIT 1");
+            $mgrStmt->execute([$currentUserId]);
+            $mgr = $mgrStmt->fetch(PDO::FETCH_ASSOC);
+            if ($mgr && !empty($mgr['manager_email'])) {
+                $mgrBody = emailManagerAssetRequest(
+                    $mgr['manager_name'] ?: 'Manager',
+                    trim($employeeName),
+                    $formData['requirement'],
+                    $notifLink
+                );
+                sendEmail($mgr['manager_email'], $subject, $mgrBody);
+            }
+
             logActivity($currentUserId, 'asset_request', 'Submitted asset request: ' . $formData['requirement']);
             flashMessage('success', 'Your asset request has been submitted successfully!');
             header('Location: ' . SITE_URL . '/employee/requests/my_requests.php');

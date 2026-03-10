@@ -32,6 +32,7 @@ try {
                 designation,
                 department,
                 manager_name,
+                manager_email,
                 status,
                 is_first_login,
                 created_at,
@@ -201,6 +202,15 @@ include __DIR__ . '/../../includes/sidebar.php';
             <?php if ($employee['manager_name']): ?>
               <dt class="col-sm-5 text-muted fw-normal">Manager</dt>
               <dd class="col-sm-7"><?= sanitize($employee['manager_name']) ?></dd>
+            <?php endif; ?>
+
+            <?php if ($employee['manager_email']): ?>
+              <dt class="col-sm-5 text-muted fw-normal">Manager Email</dt>
+              <dd class="col-sm-7">
+                <a href="mailto:<?= sanitize($employee['manager_email']) ?>">
+                  <?= sanitize($employee['manager_email']) ?>
+                </a>
+              </dd>
             <?php endif; ?>
 
             <dt class="col-sm-5 text-muted fw-normal">Joined On</dt>

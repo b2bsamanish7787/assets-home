@@ -13,7 +13,7 @@ checkRole(['admin']);
 
 $errors   = [];
 $formData = ['first_name' => '', 'last_name' => '', 'email' => '', 'role' => 'employee',
-             'manager_name' => '', 'designation' => '', 'department' => ''];
+             'manager_name' => '', 'manager_email' => '', 'designation' => '', 'department' => ''];
 
 // ── POST handler ──────────────────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -26,13 +26,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Collect & sanitise raw input
     $formData = [
-        'first_name'   => trim($_POST['first_name']   ?? ''),
-        'last_name'    => trim($_POST['last_name']    ?? ''),
-        'email'        => trim($_POST['email']        ?? ''),
-        'role'         => trim($_POST['role']         ?? 'employee'),
-        'manager_name' => trim($_POST['manager_name'] ?? ''),
-        'designation'  => trim($_POST['designation']  ?? ''),
-        'department'   => trim($_POST['department']   ?? ''),
+        'first_name'    => trim($_POST['first_name']    ?? ''),
+        'last_name'     => trim($_POST['last_name']     ?? ''),
+        'email'         => trim($_POST['email']         ?? ''),
+        'role'          => trim($_POST['role']          ?? 'employee'),
+        'manager_name'  => trim($_POST['manager_name']  ?? ''),
+        'manager_email' => trim($_POST['manager_email'] ?? ''),
+        'designation'   => trim($_POST['designation']   ?? ''),
+        'department'    => trim($_POST['department']    ?? ''),
     ];
 
     // Validation
@@ -56,6 +57,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!in_array($formData['role'], ['admin', 'hr', 'employee'], true)) {
         $errors['role'] = 'Invalid role selected.';
     }
+    if ($formData['manager_name'] === '') {
+        $errors['manager_name'] = 'Manager name is required.';
+    }
+    if ($formData['manager_email'] === '') {
+        $errors['manager_email'] = 'Manager email is required.';
+    } elseif (!filter_var($formData['manager_email'], FILTER_VALIDATE_EMAIL)) {
+        $errors['manager_email'] = 'Enter a valid manager email address.';
+    }
 
     if (empty($errors)) {
         $employeeId = generateEmployeeId();
@@ -67,8 +76,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $pdo->prepare("
                 INSERT INTO users
                     (employee_id, first_name, last_name, email, password, role,
-                     manager_name, designation, department, temp_password, is_first_login, status, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 'active', NOW())
+                     manager_name, manager_email, designation, department, temp_password, is_first_login, status, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 'active', NOW())
             ");
             $stmt->execute([
                 $employeeId,
@@ -78,6 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $hashed,
                 $formData['role'],
                 $formData['manager_name'],
+                $formData['manager_email'],
                 $formData['designation'],
                 $formData['department'],
                 $tempPass,
@@ -208,10 +218,24 @@ include __DIR__ . '/../../includes/sidebar.php';
 
           <!-- Manager Name -->
           <div class="col-md-6">
-            <label for="manager_name" class="form-label fw-semibold">Manager Name</label>
+            <label for="manager_name" class="form-label fw-semibold">Manager Name <span class="text-danger">*</span></label>
             <input type="text" id="manager_name" name="manager_name"
-                   class="form-control"
-                   value="<?= sanitize($formData['manager_name']) ?>">
+                   class="form-control <?= isset($errors['manager_name']) ? 'is-invalid' : '' ?>"
+                   value="<?= sanitize($formData['manager_name']) ?>" required>
+            <?php if (isset($errors['manager_name'])): ?>
+              <div class="invalid-feedback"><?= sanitize($errors['manager_name']) ?></div>
+            <?php endif; ?>
+          </div>
+
+          <!-- Manager Email -->
+          <div class="col-md-6">
+            <label for="manager_email" class="form-label fw-semibold">Manager Email <span class="text-danger">*</span></label>
+            <input type="email" id="manager_email" name="manager_email"
+                   class="form-control <?= isset($errors['manager_email']) ? 'is-invalid' : '' ?>"
+                   value="<?= sanitize($formData['manager_email']) ?>" required>
+            <?php if (isset($errors['manager_email'])): ?>
+              <div class="invalid-feedback"><?= sanitize($errors['manager_email']) ?></div>
+            <?php endif; ?>
           </div>
 
           <!-- Designation -->
