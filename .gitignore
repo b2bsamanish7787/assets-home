@@ -7,9 +7,12 @@
 # Log files
 /logs/*.log
 
-# Uploaded files (keep placeholder)
+# Uploaded files (keep placeholder dirs, ignore actual uploads)
 /assets/uploads/*
 !/assets/uploads/.gitkeep
+!/assets/uploads/bills/
+/assets/uploads/bills/*
+!/assets/uploads/bills/.gitkeep
 
 # Environment/config overrides
 /config/local.php

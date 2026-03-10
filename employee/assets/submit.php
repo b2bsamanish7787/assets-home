@@ -30,6 +30,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $formData['purchased_by']  = sanitize($_POST['purchased_by']  ?? '');
     $consentChecked            = isset($_POST['consent']) ? true : false;
 
+    // Resolve the actual purchaser name for DB storage
+    if ($formData['purchased_by'] === 'me') {
+        $firstName = trim($_SESSION['first_name'] ?? '');
+        $lastName  = trim($_SESSION['last_name']  ?? '');
+        if ($firstName || $lastName) {
+            $purchasedByName = trim($firstName . ' ' . $lastName);
+        } else {
+            $nameStmt = $pdo->prepare("SELECT CONCAT(first_name, ' ', last_name) FROM users WHERE id = ?");
+            $nameStmt->execute([$currentUserId]);
+            $purchasedByName = $nameStmt->fetchColumn() ?: 'Employee';
+        }
+    } else {
+        $purchasedByName = COMPANY_NAME;
+    }
+
     // Validate
     if (!$formData['category_id'])  $errors[] = 'Please select a category.';
     if (!$formData['asset_name'])   $errors[] = 'Asset name is required.';
@@ -43,29 +58,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (empty($_FILES['bill']['name'])) {
             $errors[] = 'Please upload the bill/receipt for assets purchased by you.';
         } else {
-            $file      = $_FILES['bill'];
-            $maxBytes  = 5 * 1024 * 1024; // 5 MB
-            $allowedMime = ['image/jpeg', 'image/png', 'application/pdf'];
+            $file        = $_FILES['bill'];
+            $maxBytes    = 5 * 1024 * 1024; // 5 MB
+            $allowedExts = ['jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'png' => 'image/png', 'pdf' => 'application/pdf'];
+            $allowedMimes = ['image/jpeg', 'image/png', 'application/pdf'];
             $ext         = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-            $extMap      = ['jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'png' => 'image/png', 'pdf' => 'application/pdf'];
 
-            if ($file['size'] > $maxBytes) {
+            if ($file['error'] !== UPLOAD_ERR_OK) {
+                $errors[] = 'File upload error (code ' . $file['error'] . '). Please try again.';
+            } elseif ($file['size'] > $maxBytes) {
                 $errors[] = 'Bill file must not exceed 5 MB.';
-            } elseif ($file['error'] !== UPLOAD_ERR_OK) {
-                $errors[] = 'File upload error. Please try again.';
+            } elseif (!isset($allowedExts[$ext])) {
+                $errors[] = 'Only PDF, JPG, and PNG files are allowed for the bill.';
             } else {
-                // MIME check via finfo
-                $finfo    = new finfo(FILEINFO_MIME_TYPE);
-                $mimeType = $finfo->file($file['tmp_name']);
-                if (!in_array($mimeType, $allowedMime)) {
+                // MIME check — prefer finfo, fall back gracefully if unavailable
+                $detectedMime = false;
+                if (function_exists('finfo_open')) {
+                    try {
+                        $finfo        = new finfo(FILEINFO_MIME_TYPE);
+                        $detectedMime = $finfo->file($file['tmp_name']);
+                    } catch (Exception $e) {
+                        $detectedMime = false;
+                    }
+                }
+                if ($detectedMime && !in_array($detectedMime, $allowedMimes, true)) {
                     $errors[] = 'Only PDF, JPG, and PNG files are allowed for the bill.';
                 } else {
-                    $newName  = uniqid('bill_', true) . '.' . $ext;
-                    $destDir  = defined('UPLOAD_PATH') ? rtrim(UPLOAD_PATH, '/') . '/bills/' : __DIR__ . '/../../uploads/bills/';
-                    if (!is_dir($destDir)) {
-                        mkdir($destDir, 0755, true);
-                    }
-                    if (!move_uploaded_file($file['tmp_name'], $destDir . $newName)) {
+                    $newName = uniqid('bill_', true) . '.' . $ext;
+                    $destDir = defined('UPLOAD_PATH')
+                        ? rtrim(UPLOAD_PATH, '/') . '/bills/'
+                        : __DIR__ . '/../../assets/uploads/bills/';
+
+                    if (!is_dir($destDir) && !mkdir($destDir, 0755, true)) {
+                        $errors[] = 'Upload directory could not be created. Please contact the administrator.';
+                    } elseif (!move_uploaded_file($file['tmp_name'], $destDir . $newName)) {
                         $errors[] = 'Failed to save uploaded file. Please try again.';
                     } else {
                         $billPath = 'bills/' . $newName;
@@ -82,8 +108,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Insert asset
             $stmt = $pdo->prepare("INSERT INTO assets
                                    (category_id, asset_name, model_number, serial_number, receive_date,
-                                    purchased_by, bill_file, status, assigned_to, submitted_by, created_at)
-                                   VALUES (?, ?, ?, ?, ?, ?, ?, 'assigned', ?, ?, NOW())");
+                                    purchased_by, purchased_by_name, bill_file, status, assigned_to, submitted_by, created_at)
+                                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'assigned', ?, ?, NOW())");
             $stmt->execute([
                 $formData['category_id'],
                 $formData['asset_name'],
@@ -91,6 +117,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $formData['serial_number'] ?: null,
                 $formData['receive_date'],
                 $formData['purchased_by'],
+                $purchasedByName ?: null,
                 $billPath,
                 $currentUserId,
                 $currentUserId,

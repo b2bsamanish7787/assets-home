@@ -147,3 +147,6 @@ ALTER TABLE transfer_consent ADD COLUMN IF NOT EXISTS accepted_at TIMESTAMP NULL
 
 -- Migration: add type to transfer_consent to distinguish direct assignments from transfers
 ALTER TABLE transfer_consent ADD COLUMN IF NOT EXISTS type ENUM('transfer','assignment') NOT NULL DEFAULT 'transfer' AFTER to_user;
+
+-- Migration: add purchased_by_name to store the actual purchaser name (employee full name or company name)
+ALTER TABLE assets ADD COLUMN IF NOT EXISTS purchased_by_name VARCHAR(150) NULL AFTER purchased_by;

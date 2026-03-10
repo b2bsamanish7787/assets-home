@@ -12,11 +12,9 @@ checkRole(['employee']);
 $currentUserId = (int)$_SESSION['user_id'];
 
 $stmt = $pdo->prepare("SELECT a.id, a.asset_name, c.name AS category_name, a.model_number,
-                               a.serial_number, a.receive_date, a.purchased_by, a.status,
-                               CONCAT(buyer.first_name, ' ', buyer.last_name) AS purchased_by_name
+                               a.serial_number, a.receive_date, a.purchased_by, a.purchased_by_name, a.status
                         FROM assets a
                         LEFT JOIN categories c ON c.id = a.category_id
-                        LEFT JOIN users buyer ON buyer.id = a.submitted_by
                         WHERE a.assigned_to = ?
                         ORDER BY a.receive_date DESC");
 $stmt->execute([$currentUserId]);
@@ -88,7 +86,7 @@ include '../../includes/sidebar.php';
                     </span>
                   <?php else: ?>
                     <span class="badge bg-secondary">
-                      <i class="bi bi-building me-1"></i><?= htmlspecialchars(COMPANY_NAME) ?>
+                      <i class="bi bi-building me-1"></i><?= htmlspecialchars($asset['purchased_by_name'] ?? COMPANY_NAME) ?>
                     </span>
                   <?php endif; ?>
                 </td>

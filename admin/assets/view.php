@@ -29,6 +29,7 @@ try {
                 a.serial_number,
                 a.receive_date,
                 a.purchased_by,
+                a.purchased_by_name,
                 a.bill_file,
                 a.status,
                 a.created_at,
@@ -211,9 +212,13 @@ include __DIR__ . '/../../includes/sidebar.php';
             <dt class="col-sm-4 text-muted fw-normal">Purchased By</dt>
             <dd class="col-sm-8">
               <?php if ($asset['purchased_by'] === 'me'): ?>
-                <span class="badge bg-info text-dark">Employee</span>
+                <span class="badge bg-info text-dark">
+                  <i class="bi bi-person-fill me-1"></i><?= sanitize($asset['purchased_by_name'] ?? 'Employee') ?>
+                </span>
               <?php else: ?>
-                <span class="badge bg-secondary">Company</span>
+                <span class="badge bg-secondary">
+                  <i class="bi bi-building me-1"></i><?= sanitize($asset['purchased_by_name'] ?? 'Company') ?>
+                </span>
               <?php endif; ?>
             </dd>
 
