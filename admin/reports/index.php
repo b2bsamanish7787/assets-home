@@ -70,14 +70,13 @@ $stmt3 = $pdo->prepare($sql3);
 $stmt3->execute($params3);
 $empSummary = $stmt3->fetchAll(PDO::FETCH_ASSOC);
 
-// Build export query string
-$exportParams = http_build_query([
-    'type'       => 'assets',
-    'date_from'  => $dateFrom,
-    'date_to'    => $dateTo,
-    'department' => $department,
-    'category'   => $category,
-    'status'     => $status,
+// Base export params shared across all export links (no 'type' — set per link)
+$exportBase = http_build_query([
+    'date_from'   => $dateFrom,
+    'date_to'     => $dateTo,
+    'department'  => $department,
+    'category_id' => $category,
+    'status'      => $status,
 ]);
 
 $pageTitle = 'Reports';
@@ -90,7 +89,7 @@ include '../../includes/sidebar.php';
 
     <div class="d-flex justify-content-between align-items-center mb-4">
       <h4 class="mb-0"><i class="bi bi-bar-chart-fill me-2 text-primary"></i>Reports</h4>
-      <a href="<?= SITE_URL ?>/ajax/export_report.php?<?= $exportParams ?>" class="btn btn-success btn-sm">
+      <a href="<?= SITE_URL ?>/ajax/export_report.php?type=assets_assigned&<?= $exportBase ?>" class="btn btn-success btn-sm">
         <i class="bi bi-file-earmark-spreadsheet me-1"></i>Export CSV
       </a>
     </div>
@@ -190,7 +189,7 @@ include '../../includes/sidebar.php';
         <div class="card shadow-sm">
           <div class="card-header bg-light d-flex justify-content-between align-items-center">
             <span class="fw-semibold"><i class="bi bi-person-check me-1"></i>Assets Assigned to Employees</span>
-            <a href="<?= SITE_URL ?>/ajax/export_report.php?<?= $exportParams ?>&tab=assigned" class="btn btn-outline-success btn-sm">
+            <a href="<?= SITE_URL ?>/ajax/export_report.php?type=assets_assigned&<?= $exportBase ?>" class="btn btn-outline-success btn-sm">
               <i class="bi bi-download me-1"></i>Export This Tab
             </a>
           </div>
@@ -251,7 +250,7 @@ include '../../includes/sidebar.php';
         <div class="card shadow-sm">
           <div class="card-header bg-light d-flex justify-content-between align-items-center">
             <span class="fw-semibold"><i class="bi bi-box-seam me-1"></i>Available Assets Inventory</span>
-            <a href="<?= SITE_URL ?>/ajax/export_report.php?<?= $exportParams ?>&tab=available" class="btn btn-outline-success btn-sm">
+            <a href="<?= SITE_URL ?>/ajax/export_report.php?type=assets_available&<?= $exportBase ?>" class="btn btn-outline-success btn-sm">
               <i class="bi bi-download me-1"></i>Export This Tab
             </a>
           </div>
@@ -295,7 +294,7 @@ include '../../includes/sidebar.php';
         <div class="card shadow-sm">
           <div class="card-header bg-light d-flex justify-content-between align-items-center">
             <span class="fw-semibold"><i class="bi bi-people me-1"></i>Employee Summary by Department</span>
-            <a href="<?= SITE_URL ?>/ajax/export_report.php?<?= $exportParams ?>&tab=employees" class="btn btn-outline-success btn-sm">
+            <a href="<?= SITE_URL ?>/ajax/export_report.php?type=employees&<?= $exportBase ?>" class="btn btn-outline-success btn-sm">
               <i class="bi bi-download me-1"></i>Export This Tab
             </a>
           </div>
