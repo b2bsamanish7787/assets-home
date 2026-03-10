@@ -85,8 +85,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         // Log activity
                         logActivity($user['id'], 'login', 'User logged in');
 
-                        // First login → redirect to change password
-                        if ($user['is_first_login']) {
+                        // First login → clear the flag immediately (so admin sees the employee
+                        // has authenticated), then redirect to the password change page.
+                        $needsPasswordChange = (bool)$user['is_first_login'];
+                        if ($needsPasswordChange) {
+                            try {
+                                $pdo->prepare("UPDATE users SET is_first_login = 0 WHERE id = ?")
+                                    ->execute([$user['id']]);
+                            } catch (Exception $e) {
+                                error_log('login.php: failed to clear is_first_login for user ' . $user['id'] . ': ' . $e->getMessage());
+                            }
                             header('Location: ' . SITE_URL . '/employee/change_password.php');
                             exit;
                         }
