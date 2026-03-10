@@ -12,9 +12,11 @@ checkRole(['employee']);
 $currentUserId = (int)$_SESSION['user_id'];
 
 $stmt = $pdo->prepare("SELECT a.id, a.asset_name, c.name AS category_name, a.model_number,
-                               a.serial_number, a.receive_date, a.purchased_by, a.status
+                               a.serial_number, a.receive_date, a.purchased_by, a.status,
+                               CONCAT(buyer.first_name, ' ', buyer.last_name) AS purchased_by_name
                         FROM assets a
                         LEFT JOIN categories c ON c.id = a.category_id
+                        LEFT JOIN users buyer ON buyer.id = a.submitted_by
                         WHERE a.assigned_to = ?
                         ORDER BY a.receive_date DESC");
 $stmt->execute([$currentUserId]);
@@ -81,9 +83,13 @@ include '../../includes/sidebar.php';
                 </td>
                 <td>
                   <?php if ($asset['purchased_by'] === 'me'): ?>
-                    <span class="badge bg-info text-dark"><i class="bi bi-person-fill me-1"></i>Me</span>
+                    <span class="badge bg-info text-dark">
+                      <i class="bi bi-person-fill me-1"></i><?= htmlspecialchars($asset['purchased_by_name'] ?? 'Employee') ?>
+                    </span>
                   <?php else: ?>
-                    <span class="badge bg-secondary"><i class="bi bi-building me-1"></i>Company</span>
+                    <span class="badge bg-secondary">
+                      <i class="bi bi-building me-1"></i><?= htmlspecialchars(COMPANY_NAME) ?>
+                    </span>
                   <?php endif; ?>
                 </td>
                 <td><span class="badge <?= $sc ?>"><?= ucfirst(str_replace('_', ' ', $asset['status'])) ?></span></td>

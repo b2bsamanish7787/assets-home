@@ -13,7 +13,7 @@ $currentUserId = (int)$_SESSION['user_id'];
 $errors        = [];
 
 // Fetch the single pending consent for this employee
-$stmt = $pdo->prepare("SELECT tc.id AS consent_id, tc.asset_id, tc.from_user,
+$stmt = $pdo->prepare("SELECT tc.id AS consent_id, tc.asset_id, tc.from_user, tc.type,
                                a.asset_name, a.model_number, a.serial_number,
                                c.name AS category_name,
                                CONCAT(u.first_name,' ',u.last_name) AS from_user_name
@@ -24,7 +24,8 @@ $stmt = $pdo->prepare("SELECT tc.id AS consent_id, tc.asset_id, tc.from_user,
                         WHERE tc.to_user = ? AND tc.status = 'pending'
                         LIMIT 1");
 $stmt->execute([$currentUserId]);
-$consent = $stmt->fetch(PDO::FETCH_ASSOC);
+$consent      = $stmt->fetch(PDO::FETCH_ASSOC);
+$isAssignment = ($consent['type'] ?? 'transfer') === 'assignment';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $consent) {
     if (!validateCSRF($_POST['csrf_token'] ?? '')) {
@@ -47,24 +48,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $consent) {
 
             // Mark consent as accepted
             $pdo->prepare("UPDATE transfer_consent
-                           SET consent_given = 1, status = 'accepted', receive_date = ?
+                           SET consent_given = 1, status = 'accepted', receive_date = ?, accepted_at = NOW()
                            WHERE id = ?")
                 ->execute([$receiveDate, $consentId]);
 
-            // Update asset ownership
-            $pdo->prepare("UPDATE assets SET assigned_to = ?, status = 'assigned' WHERE id = ?")
-                ->execute([$currentUserId, $consent['asset_id']]);
+            if ($consent['type'] === 'transfer') {
+                // For transfers: update asset ownership and record history
+                $pdo->prepare("UPDATE assets SET assigned_to = ?, status = 'assigned' WHERE id = ?")
+                    ->execute([$currentUserId, $consent['asset_id']]);
 
-            // Record in asset history
-            $pdo->prepare("INSERT INTO asset_history (asset_id, action, from_user, to_user, created_by, created_at)
-                           VALUES (?, 'transferred', ?, ?, ?, NOW())")
-                ->execute([$consent['asset_id'], $consent['from_user'], $currentUserId, $currentUserId]);
+                $pdo->prepare("INSERT INTO asset_history (asset_id, action, from_user, to_user, created_by, created_at)
+                               VALUES (?, 'transferred', ?, ?, ?, NOW())")
+                    ->execute([$consent['asset_id'], $consent['from_user'], $currentUserId, $currentUserId]);
+            }
+            // For assignments: asset is already correctly assigned by admin; no duplicate update or history needed.
 
             $pdo->commit();
 
             // Notify admin
             $employeeName = trim(($_SESSION['first_name'] ?? '') . ' ' . ($_SESSION['last_name'] ?? ''));
-            $notifMsg     = $employeeName . ' accepted transfer of asset: ' . $consent['asset_name'];
+            $action       = $consent['type'] === 'assignment' ? 'confirmed receipt of assigned asset' : 'accepted transfer of asset';
+            $notifMsg     = $employeeName . ' ' . $action . ': ' . $consent['asset_name'];
             $notifLink    = SITE_URL . '/admin/assets/view.php?id=' . $consent['asset_id'];
 
             // Notify the admin user(s) by fetching admin IDs
@@ -134,11 +138,15 @@ include '../includes/sidebar.php';
         <div class="card shadow-sm mb-4">
           <div class="card-header bg-warning text-dark d-flex align-items-center gap-2">
             <i class="bi bi-exclamation-triangle-fill"></i>
-            <span class="fw-semibold">Pending Asset Transfer — Action Required</span>
+            <span class="fw-semibold">
+              <?= $isAssignment ? 'Pending Asset Assignment — Action Required' : 'Pending Asset Transfer — Action Required' ?>
+            </span>
           </div>
           <div class="card-body">
             <p class="text-muted mb-3">
-              The following asset is being transferred to you. Please review the details carefully and confirm receipt.
+              <?= $isAssignment
+                    ? 'The following asset has been assigned to you. Please review the details and confirm receipt.'
+                    : 'The following asset is being transferred to you. Please review the details carefully and confirm receipt.' ?>
             </p>
             <div class="row g-3">
               <div class="col-sm-6">
@@ -158,7 +166,9 @@ include '../includes/sidebar.php';
                 <div class="fw-semibold fs-6"><?= htmlspecialchars($consent['serial_number'] ?? '—') ?></div>
               </div>
               <div class="col-sm-6">
-                <label class="form-label text-muted small mb-0">Transferred From</label>
+                <label class="form-label text-muted small mb-0">
+                  <?= $isAssignment ? 'Assigned By' : 'Transferred From' ?>
+                </label>
                 <div class="fw-semibold fs-6"><?= htmlspecialchars($consent['from_user_name'] ?? 'Admin / HR') ?></div>
               </div>
             </div>
@@ -201,7 +211,8 @@ include '../includes/sidebar.php';
 
               <div class="d-flex gap-2">
                 <button type="submit" class="btn btn-success">
-                  <i class="bi bi-check-circle-fill me-1"></i>Accept Transfer
+                  <i class="bi bi-check-circle-fill me-1"></i>
+                  <?= $isAssignment ? 'Confirm Receipt' : 'Accept Transfer' ?>
                 </button>
                 <a href="<?= SITE_URL ?>/employee/dashboard.php" class="btn btn-outline-secondary">
                   <i class="bi bi-x-circle me-1"></i>Decide Later
@@ -233,9 +244,9 @@ $(function () {
       Swal.fire({
         icon: 'question',
         title: 'Confirm Receipt',
-        text: 'Are you sure you want to accept this asset transfer? This action cannot be undone.',
+        text: 'Are you sure you want to confirm receipt of this asset? This action cannot be undone.',
         showCancelButton: true,
-        confirmButtonText: 'Yes, Accept',
+        confirmButtonText: 'Yes, Confirm',
         cancelButtonText: 'Cancel',
         confirmButtonColor: '#198754',
       }).then(result => {

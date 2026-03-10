@@ -15,6 +15,7 @@ define('DB_PASS', '');
 // Site configuration
 define('SITE_URL', 'http://localhost/assets-home');
 define('SITE_NAME', 'Buzznation Assets Management System');
+define('COMPANY_NAME', 'Buzznation');
 
 // Mail configuration (PHPMailer)
 define('MAIL_HOST', 'smtp.gmail.com');

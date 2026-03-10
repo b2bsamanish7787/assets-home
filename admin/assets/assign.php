@@ -70,17 +70,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                  VALUES (?, 'assigned', ?, ?, ?)"
             )->execute([$assetId, $employeeId, $notes, $_SESSION['user_id']]);
 
+            // Create consent record so the employee must acknowledge receipt
+            $pdo->prepare(
+                "INSERT INTO transfer_consent (asset_id, from_user, to_user, type, status)
+                 VALUES (?, ?, ?, 'assignment', 'pending')"
+            )->execute([$assetId, (int)$_SESSION['user_id'], $employeeId]);
+
             $pdo->commit();
 
             $empName  = trim($employee['first_name'] . ' ' . $employee['last_name']);
             $assetName = $asset['asset_name'];
 
-            // Notify the employee
+            // Notify the employee — link to consent page so they can confirm receipt
             sendNotification(
                 $employeeId,
                 'asset_assigned',
-                "Asset \"{$assetName}\" has been assigned to you.",
-                SITE_URL . '/employee/assets/my_assets.php'
+                "Asset \"{$assetName}\" has been assigned to you. Please confirm receipt.",
+                SITE_URL . '/employee/consent.php'
             );
 
             logActivity(

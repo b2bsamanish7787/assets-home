@@ -144,3 +144,6 @@ SET FOREIGN_KEY_CHECKS = 1;
 
 -- Migration: add accepted_at to transfer_consent (safe to run on existing databases)
 ALTER TABLE transfer_consent ADD COLUMN IF NOT EXISTS accepted_at TIMESTAMP NULL DEFAULT NULL AFTER status;
+
+-- Migration: add type to transfer_consent to distinguish direct assignments from transfers
+ALTER TABLE transfer_consent ADD COLUMN IF NOT EXISTS type ENUM('transfer','assignment') NOT NULL DEFAULT 'transfer' AFTER to_user;
