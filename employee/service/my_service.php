@@ -50,15 +50,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['upload_bill'])) {
                 $uploadError = 'Only PDF, JPG, and PNG files are allowed.';
             } else {
                 $newName = uniqid('sbill_', true) . '.' . $ext;
-                $destDir = defined('UPLOAD_PATH') ? rtrim(UPLOAD_PATH, '/') . '/service_bills/' : __DIR__ . '/../../uploads/service_bills/';
+                $destDir = __DIR__ . '/../../uploads/service_bills/';
                 if (!is_dir($destDir)) {
                     mkdir($destDir, 0755, true);
                 }
                 if (!move_uploaded_file($file['tmp_name'], $destDir . $newName)) {
                     $uploadError = 'Failed to save uploaded file.';
                 } else {
-                    $pdo->prepare("UPDATE service_requests SET service_bill = ? WHERE id = ?")
-                        ->execute(['service_bills/' . $newName, $serviceId]);
+                    $actualAmount = null;
+                    if (isset($_POST['actual_amount']) && $_POST['actual_amount'] !== '') {
+                        $actualAmount = (float)$_POST['actual_amount'];
+                        if ($actualAmount < 0) {
+                            $actualAmount = null;
+                        }
+                    }
+                    $pdo->prepare("UPDATE service_requests SET service_bill = ?, actual_amount = ? WHERE id = ?")
+                        ->execute(['service_bills/' . $newName, $actualAmount, $serviceId]);
                     logActivity($currentUserId, 'service_bill_uploaded', 'Uploaded service bill for request #' . $serviceId);
                     flashMessage('success', 'Service bill uploaded successfully!');
                     header('Location: ' . SITE_URL . '/employee/service/my_service.php');
@@ -77,7 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['upload_bill'])) {
 
 // Fetch service requests
 $stmt = $pdo->prepare("SELECT sr.id, a.asset_name, sr.problem_description, sr.problem_since,
-                               sr.approx_amount, sr.status, sr.admin_remarks,
+                               sr.approx_amount, sr.actual_amount, sr.status, sr.admin_remarks,
                                sr.service_bill, sr.created_at
                         FROM service_requests sr
                         LEFT JOIN assets a ON a.id = sr.asset_id
@@ -118,7 +125,7 @@ include '../../includes/sidebar.php';
                 <th>Asset</th>
                 <th>Problem</th>
                 <th width="120">Problem Since</th>
-                <th width="100" class="text-end">Est. Amount</th>
+                <th width="120" class="text-end">Amount</th>
                 <th width="110" class="text-center">Status</th>
                 <th>Admin Remarks</th>
                 <th width="130" class="text-center">Bill</th>
@@ -147,10 +154,16 @@ include '../../includes/sidebar.php';
                   <?= $sr['problem_since'] ? date('d M Y', strtotime($sr['problem_since'])) : '—' ?>
                 </td>
                 <td class="text-end">
-                  <?= $sr['approx_amount'] !== null
-                    ? '₹' . number_format((float)$sr['approx_amount'], 2)
-                    : '<span class="text-muted">—</span>'
-                  ?>
+                  <?php if ($sr['actual_amount'] !== null): ?>
+                    <span class="fw-semibold">₹<?= number_format((float)$sr['actual_amount'], 2) ?></span>
+                    <?php if ($sr['approx_amount'] !== null): ?>
+                      <br><small class="text-muted">Est: ₹<?= number_format((float)$sr['approx_amount'], 2) ?></small>
+                    <?php endif; ?>
+                  <?php elseif ($sr['approx_amount'] !== null): ?>
+                    <span class="text-muted">₹<?= number_format((float)$sr['approx_amount'], 2) ?></span>
+                  <?php else: ?>
+                    <span class="text-muted">—</span>
+                  <?php endif; ?>
                 </td>
                 <td class="text-center">
                   <span class="badge <?= $sc ?>"><?= ucfirst($sr['status']) ?></span>
@@ -163,7 +176,7 @@ include '../../includes/sidebar.php';
                 </td>
                 <td class="text-center">
                   <?php if ($sr['service_bill']): ?>
-                    <a href="<?= SITE_URL ?>/uploads/<?= htmlspecialchars($sr['service_bill']) ?>"
+                    <a href="<?= htmlspecialchars(SITE_URL . '/uploads/' . implode('/', array_map('rawurlencode', explode('/', $sr['service_bill'])))) ?>"
                        target="_blank" class="btn btn-outline-success btn-sm px-2 py-0" title="View Bill">
                       <i class="bi bi-file-earmark-check me-1"></i>View
                     </a>
@@ -215,6 +228,15 @@ include '../../includes/sidebar.php';
           <input type="hidden" name="csrf_token" value="<?= generateCSRF() ?>">
           <input type="hidden" name="upload_bill" value="1">
           <input type="hidden" name="service_id" id="modalServiceId" value="">
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Actual Service Amount <span class="text-muted fw-normal">(optional)</span></label>
+            <div class="input-group input-group-sm">
+              <span class="input-group-text">₹</span>
+              <input type="number" name="actual_amount" class="form-control form-control-sm"
+                     min="0" step="0.01" placeholder="Enter actual amount">
+            </div>
+            <div class="form-text">Leave blank if amount is not yet known.</div>
+          </div>
           <label class="form-label small fw-semibold">Bill File <span class="text-danger">*</span></label>
           <input type="file" name="service_bill" class="form-control form-control-sm"
                  accept=".pdf,.jpg,.jpeg,.png" required>

@@ -92,6 +92,7 @@ CREATE TABLE IF NOT EXISTS service_requests (
   problem_since DATE,
   impact_on_work TEXT,
   approx_amount DECIMAL(10,2),
+  actual_amount DECIMAL(10,2),
   status ENUM('pending','approved','rejected','completed') DEFAULT 'pending',
   service_bill VARCHAR(255),
   remarks TEXT,

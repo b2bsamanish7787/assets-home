@@ -28,6 +28,7 @@ try {
                 sr.problem_since,
                 sr.impact_on_work,
                 sr.approx_amount,
+                sr.actual_amount,
                 sr.status,
                 sr.admin_remarks,
                 sr.service_bill,
@@ -184,12 +185,19 @@ include __DIR__ . '/../../includes/sidebar.php';
               </dd>
             <?php endif; ?>
 
-            <dt class="col-sm-4 text-muted fw-normal">Approx. Amount</dt>
+            <dt class="col-sm-4 text-muted fw-normal">Est. Amount</dt>
             <dd class="col-sm-8">
               <?= $sr['approx_amount'] !== null
                     ? '₹ ' . number_format((float)$sr['approx_amount'], 2)
                     : '<span class="text-muted">—</span>' ?>
             </dd>
+
+            <?php if ($sr['actual_amount'] !== null): ?>
+              <dt class="col-sm-4 text-muted fw-normal">Actual Amount</dt>
+              <dd class="col-sm-8 fw-semibold">
+                ₹ <?= number_format((float)$sr['actual_amount'], 2) ?>
+              </dd>
+            <?php endif; ?>
 
             <dt class="col-sm-4 text-muted fw-normal">Submitted On</dt>
             <dd class="col-sm-8">
@@ -216,7 +224,7 @@ include __DIR__ . '/../../includes/sidebar.php';
             <?php if ($sr['service_bill']): ?>
               <dt class="col-sm-4 text-muted fw-normal">Service Bill</dt>
               <dd class="col-sm-8 mb-0">
-                <a href="<?= SITE_URL . '/uploads/bills/' . urlencode($sr['service_bill']) ?>"
+                <a href="<?= htmlspecialchars(SITE_URL . '/uploads/' . implode('/', array_map('rawurlencode', explode('/', $sr['service_bill'])))) ?>"
                    target="_blank"
                    class="btn btn-sm btn-outline-secondary">
                   <i class="bi bi-file-earmark-text me-1"></i>View Bill

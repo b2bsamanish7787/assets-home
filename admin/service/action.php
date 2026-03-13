@@ -235,7 +235,7 @@ try {
 
             $pdo->prepare(
                 "UPDATE service_requests SET service_bill = ?, updated_at = NOW() WHERE id = ?"
-            )->execute([$filename, $id]);
+            )->execute(['bills/' . $filename, $id]);
 
             logActivity(
                 (int)$_SESSION['user_id'],

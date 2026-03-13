@@ -20,6 +20,7 @@ try {
                 sr.problem_description,
                 sr.problem_since,
                 sr.approx_amount,
+                sr.actual_amount,
                 sr.status,
                 sr.admin_remarks,
                 sr.service_bill,
@@ -70,7 +71,7 @@ include __DIR__ . '/../../includes/sidebar.php';
               <th>Asset</th>
               <th>Problem Description</th>
               <th>Problem Since</th>
-              <th>Approx. Amount</th>
+              <th>Amount</th>
               <th>Status</th>
               <th class="text-center">Actions</th>
             </tr>
@@ -95,9 +96,16 @@ include __DIR__ . '/../../includes/sidebar.php';
                 </td>
                 <td><?= $sr['problem_since'] ? htmlspecialchars(date('d M Y', strtotime($sr['problem_since']))) : '—' ?></td>
                 <td>
-                  <?= $sr['approx_amount'] !== null
-                      ? '₹ ' . number_format((float)$sr['approx_amount'], 2)
-                      : '—' ?>
+                  <?php if ($sr['actual_amount'] !== null): ?>
+                    <span class="fw-semibold">₹ <?= number_format((float)$sr['actual_amount'], 2) ?></span>
+                    <?php if ($sr['approx_amount'] !== null): ?>
+                      <br><small class="text-muted">Est: ₹ <?= number_format((float)$sr['approx_amount'], 2) ?></small>
+                    <?php endif; ?>
+                  <?php else: ?>
+                    <?= $sr['approx_amount'] !== null
+                        ? '₹ ' . number_format((float)$sr['approx_amount'], 2)
+                        : '—' ?>
+                  <?php endif; ?>
                 </td>
                 <td>
                   <span class="badge bg-<?= $badgeClass ?>"><?= $statusLabel ?></span>
