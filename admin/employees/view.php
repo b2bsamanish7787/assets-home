@@ -35,6 +35,7 @@ try {
                 manager_email,
                 status,
                 is_first_login,
+                temp_password,
                 created_at,
                 updated_at
          FROM users
@@ -224,6 +225,14 @@ include __DIR__ . '/../../includes/sidebar.php';
                 <span class="badge bg-warning text-dark">
                   <i class="bi bi-exclamation-triangle me-1"></i>Awaiting First Login
                 </span>
+                <?php if (!empty($employee['temp_password']) && $_SESSION['role'] === 'admin'): ?>
+                  <div class="mt-2 p-2 bg-light border rounded small">
+                    <i class="bi bi-key me-1 text-muted"></i>
+                    <strong>Temp Password:</strong>
+                    <code><?= sanitize($employee['temp_password']) ?></code>
+                    <div class="text-muted mt-1" style="font-size:0.8em;">Share this with the employee if the welcome email was not received.</div>
+                  </div>
+                <?php endif; ?>
               <?php else: ?>
                 <span class="badge bg-light text-dark border">Active User</span>
               <?php endif; ?>

@@ -107,7 +107,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $newId = (int)$pdo->lastInsertId();
 
             // Send welcome email
-            sendEmail(
+            $emailSent = sendEmail(
                 $formData['email'],
                 'Welcome to ' . SITE_NAME,
                 emailWelcome($fullName, $formData['email'], $tempPass)
@@ -126,8 +126,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 SITE_URL . '/admin/employees/edit.php?id=' . $newId
             );
 
-            flashMessage('success', "Employee {$fullName} created successfully. Login credentials sent to {$formData['email']}.");
-            header('Location: index.php');
+            if ($emailSent) {
+                flashMessage('success', "Employee {$fullName} created successfully. Login credentials sent to {$formData['email']}.");
+                header('Location: index.php');
+            } else {
+                flashMessage('warning', "Employee {$fullName} created successfully, but the welcome email could not be sent to {$formData['email']}. Please check the SMTP settings or use the Reset Password option on this profile to resend credentials.");
+                header('Location: view.php?id=' . $newId);
+            }
             exit;
 
         } catch (Exception $e) {

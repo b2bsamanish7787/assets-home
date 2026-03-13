@@ -109,7 +109,7 @@ include __DIR__ . '/../../includes/sidebar.php';
 </div><!-- /.main-content -->
 
 <?php
-$extraScripts = <<<JS
+$extraScripts = <<<'JS'
 <script>
 $(function () {
   $('#categoriesTable').DataTable({
