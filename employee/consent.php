@@ -78,7 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $consent) {
             sendNotification($adminId, 'consent_given', $notifMsg, $notifLink);
 
             logActivity($currentUserId, 'consent_given', 'Accepted transfer of asset: ' . $consent['asset_name']);
-            flashMessage('success', 'You have successfully accepted the asset transfer for <strong>' . htmlspecialchars($consent['asset_name']) . '</strong>.');
+            flashMessage('success', 'You have successfully accepted the asset transfer for: ' . $consent['asset_name'] . '.');
             header('Location: ' . SITE_URL . '/employee/assets/my_assets.php');
             exit;
 

@@ -55,7 +55,7 @@ try {
         "Deleted employee {$fullName} ({$employee['employee_id']}) — {$employee['email']}."
     );
 
-    flashMessage('success', "Employee {$fullName} has been deleted.");
+    flashMessage('success', 'Employee ' . $fullName . ' has been deleted.');
 
 } catch (Exception $e) {
     error_log('Delete employee error: ' . $e->getMessage());

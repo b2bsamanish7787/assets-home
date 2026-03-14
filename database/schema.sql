@@ -111,6 +111,7 @@ CREATE TABLE IF NOT EXISTS transfer_consent (
   asset_id INT NOT NULL,
   from_user INT NOT NULL,
   to_user INT NOT NULL,
+  type ENUM('transfer','assignment') NOT NULL DEFAULT 'transfer',
   receive_date DATE,
   consent_given TINYINT(1) DEFAULT 0,
   status ENUM('pending','accepted') DEFAULT 'pending',

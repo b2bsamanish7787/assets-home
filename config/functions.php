@@ -137,6 +137,9 @@ function getFlash(): ?array
 /**
  * Retrieve the flash message and return it as a rendered Bootstrap alert HTML string.
  * Returns an empty string when there is no flash message.
+ * The message is HTML-escaped before output — callers should pass plain text.
+ * Any user-supplied data embedded in the message must be unescaped (raw) when
+ * passed to flashMessage(); this function handles the escaping.
  *
  * @return string HTML alert markup or ''
  */

@@ -45,7 +45,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    $name        = sanitize($_POST['name'] ?? '');
+    $rawName     = trim($_POST['name'] ?? '');
+    $name        = sanitize($rawName);
     $description = sanitize($_POST['description'] ?? '');
     $status      = in_array($_POST['status'] ?? '', ['active', 'inactive']) ? $_POST['status'] : 'active';
 
@@ -75,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'edit_category',
                 "Updated category ID {$id}: {$name}"
             );
-            flashMessage('success', "Category \"{$name}\" updated successfully.");
+            flashMessage('success', 'Category "' . $rawName . '" updated successfully.');
             header('Location: index.php');
             exit;
         } catch (Exception $e) {
@@ -86,7 +87,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $csrf      = generateCSRF();
-$flash     = getFlash();
 $pageTitle = 'Edit Category — ' . SITE_NAME;
 
 include __DIR__ . '/../../includes/header.php';
@@ -95,14 +95,7 @@ include __DIR__ . '/../../includes/sidebar.php';
 
 <div class="main-content">
 
-  <?php if ($flash): ?>
-    <div class="flash-container">
-      <div class="alert alert-<?= $flash['type'] ?> alert-dismissible fade show auto-dismiss" role="alert">
-        <?= sanitize($flash['message']) ?>
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-      </div>
-    </div>
-  <?php endif; ?>
+  <?= renderFlash() ?>
 
   <div class="page-header d-flex justify-content-between align-items-center">
     <h4><i class="bi bi-pencil-square me-2"></i>Edit Category</h4>

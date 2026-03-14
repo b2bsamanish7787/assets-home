@@ -107,7 +107,7 @@ try {
                 'approve_service',
                 "Approved service request ID {$id} for asset \"{$assetName}\" ({$empName})"
             );
-            flashMessage('success', "Service request approved. Asset \"{$assetName}\" marked as In Service.");
+            flashMessage('success', 'Service request approved. Asset "' . $assetName . '" marked as In Service.');
             break;
 
         // ── REJECT ────────────────────────────────────────────────────────────

@@ -77,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 "Returned asset \"{$assetName}\" (ID: {$assetId}) from user ID {$fromUserId}"
             );
 
-            flashMessage('success', 'Asset &quot;' . htmlspecialchars($assetName) . '&quot; has been returned successfully.');
+            flashMessage('success', 'Asset "' . $assetName . '" has been returned successfully.');
             header('Location: index.php');
             exit;
         } catch (Exception $e) {

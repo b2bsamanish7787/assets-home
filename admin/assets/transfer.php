@@ -114,7 +114,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 "Transferred asset \"{$assetName}\" (ID: {$assetId}) from user ID {$fromUserId} to {$newEmpName} (ID: {$newEmployeeId})"
             );
 
-            flashMessage('success', 'Asset &quot;' . htmlspecialchars($assetName) . '&quot; transferred to ' . htmlspecialchars($newEmpName) . ' successfully.');
+            flashMessage('success', 'Asset "' . $assetName . '" transferred to ' . $newEmpName . ' successfully.');
             header('Location: index.php');
             exit;
         } catch (Exception $e) {

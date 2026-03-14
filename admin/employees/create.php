@@ -127,10 +127,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             );
 
             if ($emailSent) {
-                flashMessage('success', "Employee {$fullName} created successfully. Login credentials sent to {$formData['email']}.");
+                flashMessage('success', 'Employee ' . $fullName . ' created successfully. Login credentials sent to ' . $formData['email'] . '.');
                 header('Location: index.php');
             } else {
-                flashMessage('warning', "Employee {$fullName} created successfully, but the welcome email could not be sent to {$formData['email']}. Please check the SMTP settings or use the Reset Password option on this profile to resend credentials.");
+                flashMessage('warning', 'Employee ' . $fullName . ' created successfully, but the welcome email could not be sent to ' . $formData['email'] . '. Please check the SMTP settings or use the Reset Password option on this profile to resend credentials.');
                 header('Location: view.php?id=' . $newId);
             }
             exit;

@@ -154,7 +154,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 "Updated employee ID {$id} — {$fullName} ({$formData['email']})."
             );
 
-            flashMessage('success', "Employee {$fullName} updated successfully.");
+            flashMessage('success', 'Employee ' . $fullName . ' updated successfully.');
             header('Location: index.php');
             exit;
 

@@ -40,7 +40,7 @@ try {
     $assetCheck = $pdo->prepare("SELECT COUNT(*) FROM assets WHERE category_id = ?");
     $assetCheck->execute([$id]);
     if ((int)$assetCheck->fetchColumn() > 0) {
-        flashMessage('warning', "Cannot delete \"{$category['name']}\" — it is currently assigned to one or more assets.");
+        flashMessage('warning', 'Cannot delete "' . $category['name'] . '" — it is currently assigned to one or more assets.');
         header('Location: index.php');
         exit;
     }
@@ -51,7 +51,7 @@ try {
         'delete_category',
         "Deleted category ID {$id}: {$category['name']}"
     );
-    flashMessage('success', "Category \"{$category['name']}\" deleted successfully.");
+    flashMessage('success', 'Category "' . $category['name'] . '" deleted successfully.');
 } catch (Exception $e) {
     error_log('Delete category error: ' . $e->getMessage());
     flashMessage('danger', 'Database error. Could not delete category.');

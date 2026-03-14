@@ -23,22 +23,52 @@ try {
 }
 
 // ---------------------------------------------------------------------------
-// Automatic schema migrations — safe to run on every boot (IF NOT EXISTS / no-op)
+// Automatic schema migrations — MySQL 5.7+ compatible (INFORMATION_SCHEMA check)
 // ---------------------------------------------------------------------------
+
+/**
+ * Add a column to a table only if it does not already exist.
+ * Uses INFORMATION_SCHEMA so it works on MySQL 5.7+ and MariaDB
+ * (unlike `ADD COLUMN IF NOT EXISTS` which requires MySQL 8.0+).
+ *
+ * @param PDO    $pdo        Active database connection
+ * @param string $table      Table name — must be a valid SQL identifier
+ * @param string $column     Column name — must be a valid SQL identifier
+ * @param string $definition Column definition (type, constraints, etc.) — must be a
+ *                           hardcoded literal string; NEVER pass user-supplied input here
+ */
+function _migrateAddColumn(PDO $pdo, string $table, string $column, string $definition): void
+{
+    // Validate identifiers: letters, digits, underscores only, max 64 chars (MySQL limit)
+    if (!preg_match('/^[a-zA-Z_][a-zA-Z0-9_]{0,63}$/', $table) ||
+        !preg_match('/^[a-zA-Z_][a-zA-Z0-9_]{0,63}$/', $column)) {
+        error_log("_migrateAddColumn: invalid identifier table={$table} column={$column}");
+        return;
+    }
+    $stmt = $pdo->prepare(
+        "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?"
+    );
+    $stmt->execute([$table, $column]);
+    if (!(int)$stmt->fetchColumn()) {
+        $pdo->exec("ALTER TABLE `{$table}` ADD COLUMN `{$column}` {$definition}");
+    }
+}
+
 try {
-    // Migration: add purchased_by_name (added after initial schema release)
-    $pdo->exec("ALTER TABLE assets ADD COLUMN IF NOT EXISTS purchased_by_name VARCHAR(150) NULL AFTER purchased_by");
+    // assets: purchased_by_name (added after initial schema release)
+    _migrateAddColumn($pdo, 'assets', 'purchased_by_name', 'VARCHAR(150) NULL AFTER purchased_by');
 
-    // Migration: add approval_status (added after initial schema release)
-    $pdo->exec("ALTER TABLE assets ADD COLUMN IF NOT EXISTS approval_status ENUM('pending','approved') NOT NULL DEFAULT 'approved' AFTER status");
+    // assets: approval_status (added after initial schema release)
+    _migrateAddColumn($pdo, 'assets', 'approval_status', "ENUM('pending','approved') NOT NULL DEFAULT 'approved' AFTER status");
 
-    // Migration: add accepted_at to transfer_consent
-    $pdo->exec("ALTER TABLE transfer_consent ADD COLUMN IF NOT EXISTS accepted_at TIMESTAMP NULL DEFAULT NULL AFTER status");
+    // transfer_consent: accepted_at (added after initial schema release)
+    _migrateAddColumn($pdo, 'transfer_consent', 'accepted_at', 'TIMESTAMP NULL DEFAULT NULL AFTER status');
 
-    // Migration: add type to transfer_consent
-    $pdo->exec("ALTER TABLE transfer_consent ADD COLUMN IF NOT EXISTS type ENUM('transfer','assignment') NOT NULL DEFAULT 'transfer' AFTER to_user");
+    // transfer_consent: type (added after initial schema release)
+    _migrateAddColumn($pdo, 'transfer_consent', 'type', "ENUM('transfer','assignment') NOT NULL DEFAULT 'transfer' AFTER to_user");
 
-    // Migration: extend asset_history action enum to include 'approved'
+    // asset_history: extend action enum to include 'approved' (MODIFY is idempotent)
     $pdo->exec("ALTER TABLE asset_history MODIFY COLUMN action ENUM('submitted','assigned','transferred','returned','service_requested','service_approved','service_completed','approved') NOT NULL");
 } catch (PDOException $e) {
     error_log('Schema migration error: ' . $e->getMessage());

@@ -95,7 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 "Assigned asset \"{$assetName}\" (ID: {$assetId}) to {$empName} (ID: {$employeeId})"
             );
 
-            flashMessage('success', 'Asset &quot;' . htmlspecialchars($assetName) . '&quot; assigned to ' . htmlspecialchars($empName) . ' successfully.');
+            flashMessage('success', 'Asset "' . $assetName . '" assigned to ' . $empName . ' successfully.');
             header('Location: index.php');
             exit;
         } catch (Exception $e) {
