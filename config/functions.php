@@ -134,6 +134,27 @@ function getFlash(): ?array
     return null;
 }
 
+/**
+ * Retrieve the flash message and return it as a rendered Bootstrap alert HTML string.
+ * Returns an empty string when there is no flash message.
+ *
+ * @return string HTML alert markup or ''
+ */
+function renderFlash(): string
+{
+    $flash = getFlash();
+    if (!$flash) {
+        return '';
+    }
+    $allowedTypes = ['success', 'danger', 'warning', 'info', 'primary', 'secondary'];
+    $type    = in_array($flash['type'], $allowedTypes, true) ? $flash['type'] : 'info';
+    $message = htmlspecialchars(trim($flash['message']), ENT_QUOTES, 'UTF-8');
+    return '<div class="alert alert-' . $type . ' alert-dismissible fade show auto-dismiss" role="alert">'
+        . $message
+        . '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>'
+        . '</div>';
+}
+
 // ------------------------------------------------------------------
 // Activity Logging
 // ------------------------------------------------------------------

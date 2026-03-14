@@ -104,7 +104,7 @@ include '../includes/sidebar.php';
       </a>
     </div>
 
-    <?= getFlash() ?>
+    <?= renderFlash() ?>
 
     <?php if (!$consent): ?>
     <!-- No pending consent -->

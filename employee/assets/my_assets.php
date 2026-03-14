@@ -36,7 +36,7 @@ include '../../includes/sidebar.php';
       </a>
     </div>
 
-    <?= getFlash() ?>
+    <?= renderFlash() ?>
 
     <div class="card shadow-sm">
       <div class="card-header bg-light d-flex justify-content-between align-items-center">

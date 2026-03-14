@@ -67,7 +67,7 @@ include '../includes/sidebar.php';
       <span class="text-muted small"><i class="bi bi-calendar3 me-1"></i><?= date('l, d F Y') ?></span>
     </div>
 
-    <?= getFlash() ?>
+    <?= renderFlash() ?>
 
     <!-- Pending Consent Alert -->
     <?php if ($pendingConsent): ?>

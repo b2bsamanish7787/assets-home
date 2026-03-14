@@ -67,7 +67,7 @@ include '../../includes/sidebar.php';
       <?php endif; ?>
     </div>
 
-    <?= getFlash() ?>
+    <?= renderFlash() ?>
 
     <!-- Notifications Table -->
     <div class="card shadow-sm">

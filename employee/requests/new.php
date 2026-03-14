@@ -102,7 +102,7 @@ include '../../includes/sidebar.php';
       </a>
     </div>
 
-    <?= getFlash() ?>
+    <?= renderFlash() ?>
 
     <?php if (!empty($errors)): ?>
     <div class="alert alert-danger alert-dismissible">
