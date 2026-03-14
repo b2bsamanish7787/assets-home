@@ -95,7 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 "Assigned asset \"{$assetName}\" (ID: {$assetId}) to {$empName} (ID: {$employeeId})"
             );
 
-            flashMessage('success', "Asset \"{$assetName}\" assigned to {$empName} successfully.");
+            flashMessage('success', 'Asset &quot;' . htmlspecialchars($assetName) . '&quot; assigned to ' . htmlspecialchars($empName) . ' successfully.');
             header('Location: index.php');
             exit;
         } catch (Exception $e) {
@@ -129,7 +129,6 @@ try {
 }
 
 $csrf      = generateCSRF();
-$flash     = getFlash();
 $pageTitle = 'Assign Asset — ' . SITE_NAME;
 
 include __DIR__ . '/../../includes/header.php';
@@ -138,14 +137,7 @@ include __DIR__ . '/../../includes/sidebar.php';
 
 <div class="main-content">
 
-  <?php if ($flash): ?>
-    <div class="flash-container">
-      <div class="alert alert-<?= $flash['type'] ?> alert-dismissible fade show auto-dismiss" role="alert">
-        <?= sanitize($flash['message']) ?>
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-      </div>
-    </div>
-  <?php endif; ?>
+  <?= renderFlash() ?>
 
   <div class="page-header d-flex justify-content-between align-items-center">
     <h4><i class="bi bi-person-check me-2"></i>Assign Asset</h4>

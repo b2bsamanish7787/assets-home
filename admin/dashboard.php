@@ -48,21 +48,12 @@ try {
     $notifications = $stmt->fetchAll();
 } catch (Exception $e) { /* silence */ }
 
-$flash = getFlash();
 include __DIR__ . '/../includes/header.php';
 include __DIR__ . '/../includes/sidebar.php';
 ?>
 
 <div class="main-content">
-  <!-- Flash Message -->
-  <?php if ($flash): ?>
-    <div class="flash-container">
-      <div class="alert alert-<?= $flash['type'] ?> alert-dismissible fade show auto-dismiss" role="alert">
-        <?= sanitize($flash['message']) ?>
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-      </div>
-    </div>
-  <?php endif; ?>
+  <?= renderFlash() ?>
 
   <!-- Page Header -->
   <div class="page-header">

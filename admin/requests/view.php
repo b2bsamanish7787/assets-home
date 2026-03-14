@@ -64,7 +64,6 @@ $statusLabel = ucfirst($request['status']);
 $employeeName = trim($request['first_name'] . ' ' . $request['last_name']);
 
 $csrf      = generateCSRF();
-$flash     = getFlash();
 $pageTitle = 'Request #' . $requestId . ' — ' . SITE_NAME;
 
 include __DIR__ . '/../../includes/header.php';
@@ -73,14 +72,7 @@ include __DIR__ . '/../../includes/sidebar.php';
 
 <div class="main-content">
 
-  <?php if ($flash): ?>
-    <div class="flash-container">
-      <div class="alert alert-<?= $flash['type'] ?> alert-dismissible fade show auto-dismiss" role="alert">
-        <?= sanitize($flash['message']) ?>
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-      </div>
-    </div>
-  <?php endif; ?>
+  <?= renderFlash() ?>
 
   <!-- Page header -->
   <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">

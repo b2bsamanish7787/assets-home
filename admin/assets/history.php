@@ -88,7 +88,6 @@ $actionMeta = [
     'service_completed' => ['icon' => 'bi-check2-all',        'color' => 'text-primary',   'label' => 'Service Completed'],
 ];
 
-$flash     = getFlash();
 $pageTitle = 'Asset History — ' . SITE_NAME;
 
 include __DIR__ . '/../../includes/header.php';
@@ -97,14 +96,7 @@ include __DIR__ . '/../../includes/sidebar.php';
 
 <div class="main-content">
 
-  <?php if ($flash): ?>
-    <div class="flash-container">
-      <div class="alert alert-<?= $flash['type'] ?> alert-dismissible fade show auto-dismiss" role="alert">
-        <?= sanitize($flash['message']) ?>
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-      </div>
-    </div>
-  <?php endif; ?>
+  <?= renderFlash() ?>
 
   <div class="page-header d-flex justify-content-between align-items-center">
     <h4><i class="bi bi-clock-history me-2"></i>Asset History</h4>

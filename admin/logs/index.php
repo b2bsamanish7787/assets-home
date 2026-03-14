@@ -59,7 +59,7 @@ include '../../includes/sidebar.php';
       </a>
     </div>
 
-    <?= getFlash() ?>
+    <?= renderFlash() ?>
 
     <!-- Filter Form -->
     <div class="card shadow-sm mb-4">
