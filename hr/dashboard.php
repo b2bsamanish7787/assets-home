@@ -14,7 +14,7 @@ $currentUserId = (int)$_SESSION['user_id'];
 // ── Stats ─────────────────────────────────────────────────────────────────────
 $totalEmployees  = (int)$pdo->query("SELECT COUNT(*) FROM users WHERE role='employee' AND status='active'")->fetchColumn();
 $totalAssets     = (int)$pdo->query("SELECT COUNT(*) FROM assets")->fetchColumn();
-$availableAssets = (int)$pdo->query("SELECT COUNT(*) FROM assets WHERE status='available'")->fetchColumn();
+$availableAssets = (int)$pdo->query("SELECT COUNT(*) FROM assets WHERE status IN ('available','returned')")->fetchColumn();
 $pendingRequests = (int)$pdo->query("SELECT COUNT(*) FROM asset_requests WHERE status='pending'")->fetchColumn();
 $pendingService  = (int)$pdo->query("SELECT COUNT(*) FROM service_requests WHERE status='pending'")->fetchColumn();
 

@@ -20,7 +20,7 @@ $queries = [
     'total_employees'   => "SELECT COUNT(*) FROM users WHERE role = 'employee' AND status = 'active'",
     'total_assets'      => "SELECT COUNT(*) FROM assets",
     'assigned_assets'   => "SELECT COUNT(*) FROM assets WHERE status = 'assigned'",
-    'available_assets'  => "SELECT COUNT(*) FROM assets WHERE status = 'available'",
+    'available_assets'  => "SELECT COUNT(*) FROM assets WHERE status IN ('available','returned')",
     'pending_requests'  => "SELECT COUNT(*) FROM asset_requests WHERE status = 'pending'",
     'pending_service'   => "SELECT COUNT(*) FROM service_requests WHERE status = 'pending'",
 ];
