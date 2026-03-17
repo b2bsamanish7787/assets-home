@@ -159,6 +159,50 @@ function renderFlash(): string
 }
 
 // ------------------------------------------------------------------
+// Upload File URL Helper
+// ------------------------------------------------------------------
+
+/**
+ * Build a safe, HTML-escaped URL for an uploaded file stored under assets/uploads/.
+ *
+ * The function strips any path components that are empty or equal to '.' / '..'
+ * to prevent directory traversal, verifies the resolved filesystem path is
+ * within UPLOAD_PATH, then URL-encodes each segment and prepends SITE_URL.
+ *
+ * Returns an empty string if the path is unsafe or the file does not exist.
+ *
+ * @param  string $relativePath  Relative path as stored in the database (e.g. 'bills/abc.pdf')
+ * @return string                Fully-qualified, HTML-safe URL, or '' on failure
+ */
+function uploadUrl(string $relativePath): string
+{
+    $segments = explode('/', $relativePath);
+    $safe = [];
+    foreach ($segments as $seg) {
+        $seg = trim($seg);
+        if ($seg === '' || $seg === '.' || $seg === '..') {
+            continue;
+        }
+        $safe[] = $seg;
+    }
+    if (empty($safe)) {
+        return '';
+    }
+
+    // Verify the resolved filesystem path sits inside UPLOAD_PATH
+    $baseDir  = rtrim(realpath(UPLOAD_PATH) ?: rtrim(UPLOAD_PATH, '/'), '/');
+    $fullPath = $baseDir . '/' . implode('/', $safe);
+    $realFull = realpath($fullPath);
+    if ($realFull === false || strncmp($realFull, $baseDir . '/', strlen($baseDir) + 1) !== 0) {
+        error_log('uploadUrl: path outside upload directory or does not exist: ' . $relativePath);
+        return '';
+    }
+
+    $encoded = array_map('rawurlencode', $safe);
+    return htmlspecialchars(SITE_URL . '/assets/uploads/' . implode('/', $encoded), ENT_QUOTES, 'UTF-8');
+}
+
+// ------------------------------------------------------------------
 // Activity Logging
 // ------------------------------------------------------------------
 

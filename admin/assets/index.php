@@ -114,6 +114,11 @@ include __DIR__ . '/../../includes/sidebar.php';
                        title="Return">
                       <i class="bi bi-box-arrow-in-left"></i>
                     </a>
+                    <a href="financial_details.php?id=<?= $asset['id'] ?>"
+                       class="btn btn-sm btn-outline-success me-1"
+                       title="Financial Details">
+                      <i class="bi bi-cash-coin"></i>
+                    </a>
                   <?php endif; ?>
                   <a href="history.php?id=<?= $asset['id'] ?>"
                      class="btn btn-sm btn-outline-secondary"

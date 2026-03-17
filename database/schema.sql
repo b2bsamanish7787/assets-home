@@ -160,3 +160,21 @@ ALTER TABLE assets ADD COLUMN IF NOT EXISTS approval_status ENUM('pending','appr
 
 -- Migration: extend asset_history action enum to include 'approved'
 ALTER TABLE asset_history MODIFY COLUMN action ENUM('submitted','assigned','transferred','returned','service_requested','service_approved','service_completed','approved') NOT NULL;
+
+-- Asset Financial Details (purchase bill, amounts, entity — added by admin)
+CREATE TABLE IF NOT EXISTS asset_financial_details (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  asset_id INT NOT NULL UNIQUE,
+  bill_file VARCHAR(255) NULL,
+  purchase_date DATE NULL,
+  amount_usd DECIMAL(12,2) NULL,
+  amount_inr DECIMAL(14,2) NULL,
+  entity ENUM('Creativeshop','Buzznation') NOT NULL DEFAULT 'Buzznation',
+  created_by INT NULL,
+  updated_by INT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (asset_id)   REFERENCES assets(id) ON DELETE CASCADE,
+  FOREIGN KEY (created_by) REFERENCES users(id)  ON DELETE SET NULL,
+  FOREIGN KEY (updated_by) REFERENCES users(id)  ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

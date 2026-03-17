@@ -297,7 +297,7 @@ include '../../includes/sidebar.php';
               </label>
               <?php if ($asset['bill_file']): ?>
                 <div class="mb-2">
-                  <a href="<?= SITE_URL ?>/assets/uploads/<?= implode('/', array_map('rawurlencode', explode('/', $asset['bill_file']))) ?>"
+                  <a href="<?= uploadUrl($asset['bill_file']) ?>"
                      target="_blank" class="btn btn-outline-secondary btn-sm">
                     <i class="bi bi-file-earmark me-1"></i>View Current Bill
                   </a>

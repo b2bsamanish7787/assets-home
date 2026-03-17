@@ -96,6 +96,16 @@ try {
     error_log('view.php fetch service requests error: ' . $e->getMessage());
 }
 
+// ── Fetch financial details ───────────────────────────────────────────────────
+$financialDetails = null;
+try {
+    $fdStmt = $pdo->prepare("SELECT * FROM asset_financial_details WHERE asset_id = ?");
+    $fdStmt->execute([$assetId]);
+    $financialDetails = $fdStmt->fetch();
+} catch (Exception $e) {
+    error_log('view.php fetch financial details error: ' . $e->getMessage());
+}
+
 // ── Status helpers ────────────────────────────────────────────────────────────
 $statusBadge = match($asset['status']) {
     'available'  => 'success',
@@ -169,6 +179,9 @@ include __DIR__ . '/../../includes/sidebar.php';
         <a href="history.php?id=<?= $assetId ?>" class="btn btn-outline-secondary btn-sm">
           <i class="bi bi-clock-history me-1"></i>Full History
         </a>
+        <a href="financial_details.php?id=<?= $assetId ?>" class="btn btn-outline-success btn-sm">
+          <i class="bi bi-cash-coin me-1"></i>Financial Details
+        </a>
       <?php endif; ?>
       <a href="index.php" class="btn btn-secondary btn-sm">
         <i class="bi bi-arrow-left me-1"></i>Back
@@ -229,7 +242,7 @@ include __DIR__ . '/../../includes/sidebar.php';
             <?php if ($asset['bill_file']): ?>
               <dt class="col-sm-4 text-muted fw-normal">Purchase Bill</dt>
               <dd class="col-sm-8">
-                <a href="<?= SITE_URL ?>/assets/uploads/<?= implode('/', array_map('rawurlencode', explode('/', $asset['bill_file']))) ?>"
+                <a href="<?= uploadUrl($asset['bill_file']) ?>"
                    target="_blank" class="btn btn-outline-primary btn-sm">
                   <i class="bi bi-file-earmark me-1"></i>View Bill
                 </a>
@@ -293,6 +306,56 @@ include __DIR__ . '/../../includes/sidebar.php';
           <?php else: ?>
             <p class="text-muted mb-0">
               <i class="bi bi-person-slash me-2"></i>This asset is currently unassigned.
+            </p>
+          <?php endif; ?>
+        </div>
+      </div>
+
+      <!-- Financial Details -->
+      <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span><i class="bi bi-cash-coin me-2 text-success"></i>Financial Details</span>
+          <?php if ($_SESSION['role'] === 'admin'): ?>
+            <a href="financial_details.php?id=<?= $assetId ?>" class="btn btn-sm btn-outline-success">
+              <i class="bi bi-pencil-square me-1"></i><?= $financialDetails ? 'Edit' : 'Add' ?>
+            </a>
+          <?php endif; ?>
+        </div>
+        <div class="card-body">
+          <?php if ($financialDetails): ?>
+            <dl class="row mb-0">
+              <?php if ($financialDetails['purchase_date']): ?>
+                <dt class="col-sm-5 text-muted fw-normal">Purchase Date</dt>
+                <dd class="col-sm-7"><?= htmlspecialchars(date('d M Y', strtotime($financialDetails['purchase_date']))) ?></dd>
+              <?php endif; ?>
+              <?php if ($financialDetails['amount_usd'] !== null && $financialDetails['amount_usd'] !== ''): ?>
+                <dt class="col-sm-5 text-muted fw-normal">Amount (USD)</dt>
+                <dd class="col-sm-7">$<?= number_format((float)$financialDetails['amount_usd'], 2) ?></dd>
+              <?php endif; ?>
+              <?php if ($financialDetails['amount_inr'] !== null && $financialDetails['amount_inr'] !== ''): ?>
+                <dt class="col-sm-5 text-muted fw-normal">Amount (INR)</dt>
+                <dd class="col-sm-7">₹<?= number_format((float)$financialDetails['amount_inr'], 2) ?></dd>
+              <?php endif; ?>
+              <dt class="col-sm-5 text-muted fw-normal">Entity</dt>
+              <dd class="col-sm-7">
+                <span class="badge bg-primary"><?= htmlspecialchars($financialDetails['entity']) ?></span>
+              </dd>
+              <?php if ($financialDetails['bill_file']): ?>
+                <dt class="col-sm-5 text-muted fw-normal">Bill File</dt>
+                <dd class="col-sm-7 mb-0">
+                  <a href="<?= uploadUrl($financialDetails['bill_file']) ?>"
+                     target="_blank" class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-file-earmark me-1"></i>View Bill
+                  </a>
+                </dd>
+              <?php endif; ?>
+            </dl>
+          <?php else: ?>
+            <p class="text-muted mb-0">
+              <i class="bi bi-info-circle me-2"></i>No financial details added yet.
+              <?php if ($_SESSION['role'] === 'admin'): ?>
+                <a href="financial_details.php?id=<?= $assetId ?>" class="ms-1">Add now</a>
+              <?php endif; ?>
             </p>
           <?php endif; ?>
         </div>
