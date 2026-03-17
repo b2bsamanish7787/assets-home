@@ -45,11 +45,24 @@ try {
 }
 
 $errors   = [];
+
+// Determine current currency/amount from stored values for pre-fill
+if (!empty($details) && $details['amount_usd'] !== null && $details['amount_usd'] !== '') {
+    $initCurrency = 'USD';
+    $initAmount   = $details['amount_usd'];
+} elseif (!empty($details) && $details['amount_inr'] !== null && $details['amount_inr'] !== '') {
+    $initCurrency = 'INR';
+    $initAmount   = $details['amount_inr'];
+} else {
+    $initCurrency = 'USD';
+    $initAmount   = '';
+}
+
 $formData = [
-    'purchase_date' => $details['purchase_date'] ?? '',
-    'amount_usd'    => $details['amount_usd']    ?? '',
-    'amount_inr'    => $details['amount_inr']    ?? '',
-    'entity'        => $details['entity']        ?? 'Buzznation',
+    'purchase_date'   => $details['purchase_date'] ?? '',
+    'amount'          => $initAmount,
+    'amount_currency' => $initCurrency,
+    'entity'          => $details['entity']        ?? 'Creativeshop Global Marketing',
 ];
 
 // ── Handle POST ───────────────────────────────────────────────────────────────
@@ -60,23 +73,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    $formData['purchase_date'] = sanitize($_POST['purchase_date'] ?? '');
-    $formData['amount_usd']    = $_POST['amount_usd'] !== '' ? (float)$_POST['amount_usd'] : null;
-    $formData['amount_inr']    = $_POST['amount_inr'] !== '' ? (float)$_POST['amount_inr'] : null;
-    $formData['entity']        = sanitize($_POST['entity'] ?? '');
+    $formData['purchase_date']   = sanitize($_POST['purchase_date'] ?? '');
+    $formData['entity']          = sanitize($_POST['entity'] ?? '');
+    $formData['amount_currency'] = sanitize($_POST['amount_currency'] ?? 'USD');
+    $amountRaw                   = trim($_POST['amount'] ?? '');
+    $formData['amount']          = $amountRaw;
+    $amountValue                 = $amountRaw !== '' ? (float)$amountRaw : null;
+
+    // Normalise currency
+    if (!in_array($formData['amount_currency'], ['USD', 'INR'], true)) {
+        $formData['amount_currency'] = 'USD';
+    }
+
+    // Derive which DB column to populate
+    if ($formData['amount_currency'] === 'USD') {
+        $formData['amount_usd'] = $amountValue;
+        $formData['amount_inr'] = null;
+    } else {
+        $formData['amount_usd'] = null;
+        $formData['amount_inr'] = $amountValue;
+    }
 
     // Validate
-    if (!in_array($formData['entity'], ['Creativeshop', 'Buzznation'], true)) {
+    if (!in_array($formData['entity'], ['Creativeshop Global Marketing', 'Buzznation'], true)) {
         $errors[] = 'Please select a valid entity.';
     }
     if ($formData['purchase_date'] && !strtotime($formData['purchase_date'])) {
         $errors[] = 'Invalid purchase date.';
     }
-    if ($formData['amount_usd'] !== null && $formData['amount_usd'] < 0) {
-        $errors[] = 'Amount (USD) must not be negative.';
-    }
-    if ($formData['amount_inr'] !== null && $formData['amount_inr'] < 0) {
-        $errors[] = 'Amount (INR) must not be negative.';
+    if ($amountValue !== null && $amountValue < 0) {
+        $errors[] = 'Purchase amount must not be negative.';
     }
 
     // File upload (optional)
@@ -183,7 +209,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$pageTitle = 'Financial Details — ' . sanitize($asset['asset_name']) . ' — ' . SITE_NAME;
+$pageTitle = 'Financial Details - ' . sanitize($asset['asset_name']) . ' - ' . SITE_NAME;
 
 include __DIR__ . '/../../includes/header.php';
 include __DIR__ . '/../../includes/sidebar.php';
@@ -196,7 +222,7 @@ include __DIR__ . '/../../includes/sidebar.php';
   <div class="page-header d-flex justify-content-between align-items-center">
     <h4 class="mb-0">
       <i class="bi bi-cash-coin me-2 text-success"></i>Financial Details
-      <small class="text-muted fs-6 fw-normal ms-2">— <?= sanitize($asset['asset_name']) ?></small>
+      <small class="text-muted fs-6 fw-normal ms-2">&mdash; <?= sanitize($asset['asset_name']) ?></small>
     </h4>
     <a href="view.php?id=<?= $assetId ?>" class="btn btn-secondary btn-sm">
       <i class="bi bi-arrow-left me-1"></i>Back to Asset
@@ -225,7 +251,7 @@ include __DIR__ . '/../../includes/sidebar.php';
         <!-- Asset Bill -->
         <div class="mb-3">
           <label class="form-label fw-semibold">
-            Asset Bill <span class="text-muted fw-normal">(PDF, JPG, PNG — max 5 MB)</span>
+            Asset Bill <span class="text-muted fw-normal">(PDF, JPG, PNG &mdash; max 5 MB)</span>
           </label>
           <?php if (!empty($details['bill_file'])): ?>
             <div class="mb-2">
@@ -249,31 +275,18 @@ include __DIR__ . '/../../includes/sidebar.php';
                  max="<?= date('Y-m-d') ?>">
         </div>
 
-        <!-- Amount USD -->
+        <!-- Purchase Amount (single field + currency dropdown) -->
         <div class="mb-3">
-          <label for="amount_usd" class="form-label fw-semibold">
-            Purchase Amount <span class="text-muted fw-normal">(USD $)</span>
-          </label>
+          <label for="amount" class="form-label fw-semibold">Purchase Amount</label>
           <div class="input-group">
-            <span class="input-group-text">$</span>
-            <input type="number" name="amount_usd" id="amount_usd"
+            <select name="amount_currency" id="amount_currency" class="form-select flex-grow-0" style="max-width:120px;">
+              <option value="USD" <?= $formData['amount_currency'] === 'USD' ? 'selected' : '' ?>>USD ($)</option>
+              <option value="INR" <?= $formData['amount_currency'] === 'INR' ? 'selected' : '' ?>>INR (&#8377;)</option>
+            </select>
+            <input type="number" name="amount" id="amount"
                    class="form-control" min="0" step="0.01"
                    placeholder="0.00"
-                   value="<?= $formData['amount_usd'] !== '' ? htmlspecialchars((string)$formData['amount_usd']) : '' ?>">
-          </div>
-        </div>
-
-        <!-- Amount INR -->
-        <div class="mb-3">
-          <label for="amount_inr" class="form-label fw-semibold">
-            Purchase Amount <span class="text-muted fw-normal">(INR ₹)</span>
-          </label>
-          <div class="input-group">
-            <span class="input-group-text">₹</span>
-            <input type="number" name="amount_inr" id="amount_inr"
-                   class="form-control" min="0" step="0.01"
-                   placeholder="0.00"
-                   value="<?= $formData['amount_inr'] !== '' ? htmlspecialchars((string)$formData['amount_inr']) : '' ?>">
+                   value="<?= $formData['amount'] !== '' ? htmlspecialchars((string)$formData['amount']) : '' ?>">
           </div>
         </div>
 
@@ -281,8 +294,8 @@ include __DIR__ . '/../../includes/sidebar.php';
         <div class="mb-4">
           <label for="entity" class="form-label fw-semibold">Entity</label>
           <select name="entity" id="entity" class="form-select" required>
-            <option value="Buzznation"   <?= $formData['entity'] === 'Buzznation'   ? 'selected' : '' ?>>Buzznation</option>
-            <option value="Creativeshop" <?= $formData['entity'] === 'Creativeshop' ? 'selected' : '' ?>>Creativeshop</option>
+            <option value="Creativeshop Global Marketing" <?= $formData['entity'] === 'Creativeshop Global Marketing' ? 'selected' : '' ?>>Creativeshop Global Marketing</option>
+            <option value="Buzznation" <?= $formData['entity'] === 'Buzznation' ? 'selected' : '' ?>>Buzznation</option>
           </select>
         </div>
 

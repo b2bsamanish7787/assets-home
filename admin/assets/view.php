@@ -334,7 +334,7 @@ include __DIR__ . '/../../includes/sidebar.php';
               <?php endif; ?>
               <?php if ($financialDetails['amount_inr'] !== null && $financialDetails['amount_inr'] !== ''): ?>
                 <dt class="col-sm-5 text-muted fw-normal">Amount (INR)</dt>
-                <dd class="col-sm-7">₹<?= number_format((float)$financialDetails['amount_inr'], 2) ?></dd>
+                <dd class="col-sm-7">&#8377;<?= number_format((float)$financialDetails['amount_inr'], 2) ?></dd>
               <?php endif; ?>
               <dt class="col-sm-5 text-muted fw-normal">Entity</dt>
               <dd class="col-sm-7">

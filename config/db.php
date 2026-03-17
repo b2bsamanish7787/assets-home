@@ -79,7 +79,7 @@ try {
         purchase_date DATE          NULL,
         amount_usd   DECIMAL(12,2)  NULL,
         amount_inr   DECIMAL(14,2)  NULL,
-        entity       ENUM('Creativeshop','Buzznation') NOT NULL DEFAULT 'Buzznation',
+        entity       ENUM('Creativeshop Global Marketing','Buzznation') NOT NULL DEFAULT 'Creativeshop Global Marketing',
         created_by   INT NULL,
         updated_by   INT NULL,
         created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -88,6 +88,14 @@ try {
         FOREIGN KEY (created_by) REFERENCES users(id)  ON DELETE SET NULL,
         FOREIGN KEY (updated_by) REFERENCES users(id)  ON DELETE SET NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+    // asset_financial_details: rename legacy 'Creativeshop' entity value + update default
+    // Step 1: expand ENUM to include both old and new value (safe for all existing rows)
+    $pdo->exec("ALTER TABLE asset_financial_details MODIFY COLUMN entity ENUM('Creativeshop Global Marketing','Creativeshop','Buzznation') NOT NULL DEFAULT 'Creativeshop Global Marketing'");
+    // Step 2: migrate any existing 'Creativeshop' rows to the new full name
+    $pdo->exec("UPDATE asset_financial_details SET entity = 'Creativeshop Global Marketing' WHERE entity = 'Creativeshop'");
+    // Step 3: drop the now-unused old value from the ENUM
+    $pdo->exec("ALTER TABLE asset_financial_details MODIFY COLUMN entity ENUM('Creativeshop Global Marketing','Buzznation') NOT NULL DEFAULT 'Creativeshop Global Marketing'");
 } catch (PDOException $e) {
     error_log('Schema migration error: ' . $e->getMessage());
 }
