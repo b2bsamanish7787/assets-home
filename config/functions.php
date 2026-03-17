@@ -328,6 +328,7 @@ function sendEmail(string $to, string $subject, string $body): bool
         $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port       = MAIL_PORT;
 
+        $mail->CharSet = \PHPMailer\PHPMailer\PHPMailer::CHARSET_UTF8;
         $mail->setFrom(MAIL_FROM, MAIL_FROM_NAME);
         $mail->addAddress($to);
         $mail->isHTML(true);

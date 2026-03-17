@@ -83,7 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $emailStmt  = $pdo->query("SELECT email, first_name FROM users WHERE role IN ('admin','hr') AND status='active'");
             $recipients = $emailStmt->fetchAll(PDO::FETCH_ASSOC);
-            $subject    = SITE_NAME . ': Service Request – ' . $assetName;
+            $subject    = SITE_NAME . ': Service Request - ' . $assetName;
             foreach ($recipients as $recipient) {
                 if (function_exists('emailServiceRequest')) {
                     $body = emailServiceRequest($employeeName, $assetName);
