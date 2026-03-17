@@ -23,8 +23,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    $assetId = (int)($_POST['asset_id'] ?? 0);
-    $notes   = sanitize($_POST['notes'] ?? '');
+    $assetId          = (int)($_POST['asset_id'] ?? 0);
+    $notes            = sanitize($_POST['notes'] ?? '');
+    $receivedBy       = sanitize($_POST['received_by'] ?? '');
+    $receivedLocation = sanitize($_POST['received_location'] ?? '');
 
     if (!$assetId) {
         $errors[] = 'Please select an asset to return.';
@@ -65,9 +67,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // Insert asset history
             $pdo->prepare(
-                "INSERT INTO asset_history (asset_id, action, from_user, notes, created_by)
-                 VALUES (?, 'returned', ?, ?, ?)"
-            )->execute([$assetId, $fromUserId, $notes, $_SESSION['user_id']]);
+                "INSERT INTO asset_history (asset_id, action, from_user, notes, received_by, received_location, created_by)
+                 VALUES (?, 'returned', ?, ?, ?, ?, ?)"
+            )->execute([$assetId, $fromUserId, $notes, $receivedBy ?: null, $receivedLocation ?: null, $_SESSION['user_id']]);
 
             $pdo->commit();
 
@@ -104,7 +106,7 @@ try {
 }
 
 $csrf      = generateCSRF();
-$pageTitle = 'Return Asset — ' . SITE_NAME;
+$pageTitle = 'Return Asset - ' . SITE_NAME;
 
 include __DIR__ . '/../../includes/header.php';
 include __DIR__ . '/../../includes/sidebar.php';
@@ -163,6 +165,22 @@ include __DIR__ . '/../../includes/sidebar.php';
             <textarea class="form-control" id="notes" name="notes" rows="3"
                       placeholder="Condition of asset, reason for return, any damage, etc."
                       maxlength="1000"></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label for="received_by" class="form-label fw-semibold">Received By</label>
+            <input type="text" class="form-control" id="received_by" name="received_by"
+                   placeholder="Name of person who received the asset"
+                   maxlength="200"
+                   value="<?= htmlspecialchars($_POST['received_by'] ?? '') ?>">
+          </div>
+
+          <div class="mb-4">
+            <label for="received_location" class="form-label fw-semibold">Received Location</label>
+            <input type="text" class="form-control" id="received_location" name="received_location"
+                   placeholder="Location where the asset was received (e.g., Office, Storeroom)"
+                   maxlength="200"
+                   value="<?= htmlspecialchars($_POST['received_location'] ?? '') ?>">
           </div>
 
           <div class="d-flex gap-2">

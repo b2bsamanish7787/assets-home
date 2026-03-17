@@ -67,6 +67,8 @@ CREATE TABLE IF NOT EXISTS asset_history (
   from_user INT NULL,
   to_user INT NULL,
   notes TEXT,
+  received_by VARCHAR(200) NULL,
+  received_location VARCHAR(200) NULL,
   created_by INT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (asset_id) REFERENCES assets(id) ON DELETE CASCADE

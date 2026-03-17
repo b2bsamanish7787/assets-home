@@ -61,7 +61,7 @@ if (!$asset) {
 $history = [];
 try {
     $histStmt = $pdo->prepare(
-        "SELECT ah.id, ah.action, ah.notes, ah.created_at,
+        "SELECT ah.id, ah.action, ah.notes, ah.received_by, ah.received_location, ah.created_at,
                 CONCAT(fu.first_name, ' ', fu.last_name) AS from_user_name,
                 CONCAT(tu.first_name, ' ', tu.last_name) AS to_user_name,
                 CONCAT(cb.first_name, ' ', cb.last_name) AS created_by_name
@@ -451,6 +451,12 @@ include __DIR__ . '/../../includes/sidebar.php';
                         <?php endif; ?>
                         <?php if ($record['created_by_name'] && trim($record['created_by_name']) !== ''): ?>
                           · by <?= sanitize($record['created_by_name']) ?>
+                        <?php endif; ?>
+                        <?php if (!empty($record['received_by'])): ?>
+                          <br><i class="bi bi-person-check me-1"></i>Received by: <?= sanitize($record['received_by']) ?>
+                        <?php endif; ?>
+                        <?php if (!empty($record['received_location'])): ?>
+                          &nbsp;&middot;&nbsp;<i class="bi bi-geo-alt me-1"></i><?= sanitize($record['received_location']) ?>
                         <?php endif; ?>
                       </div>
                     </div>

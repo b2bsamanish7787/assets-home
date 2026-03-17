@@ -71,6 +71,10 @@ try {
     // asset_history: extend action enum to include 'approved' (MODIFY is idempotent)
     $pdo->exec("ALTER TABLE asset_history MODIFY COLUMN action ENUM('submitted','assigned','transferred','returned','service_requested','service_approved','service_completed','approved') NOT NULL");
 
+    // asset_history: add received_by and received_location columns for return tracking
+    _migrateAddColumn($pdo, 'asset_history', 'received_by',       "VARCHAR(200) NULL AFTER notes");
+    _migrateAddColumn($pdo, 'asset_history', 'received_location',  "VARCHAR(200) NULL AFTER received_by");
+
     // asset_financial_details: table for admin-entered purchase details per asset
     $pdo->exec("CREATE TABLE IF NOT EXISTS asset_financial_details (
         id           INT AUTO_INCREMENT PRIMARY KEY,
